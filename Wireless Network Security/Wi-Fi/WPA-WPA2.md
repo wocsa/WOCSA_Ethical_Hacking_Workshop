@@ -12,6 +12,7 @@ Ethical hacking is conducted with the explicit permission of the system owner to
   - [Information Gathering](#information-gathering)
   - [Handshake Logging](#handshake-logging)
   - [Password Cracking](#password-cracking)
+  - [TODO Defense](#todo-defense)
 - [Quick Win](#quick-win)
 - [Conclusion](#conclusion)
 - [Resources](#resources)
@@ -161,6 +162,11 @@ aircrack-ng HANDSHAKE.cap -w /usr/share/wordlists/rockyou.txt
 This command will use the rockyou.txt wordlist to try and crack the password. The rockyou.txt wordlist is a list of the most commonly used passwords, and it's included with aircrack-ng.
 
 If the password is in the wordlist, aircrack-ng will display it in the terminal window. If the password isn't in the wordlist, you can try using a different wordlist or creating your own.
+
+## TODO Defense
+1. **Detect**
+2. **Evict**
+3. **Harden**
 
 # Quick Win
 1. **Find the name of your card interface:**
