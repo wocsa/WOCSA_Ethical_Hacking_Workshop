@@ -12,7 +12,7 @@ Ethical hacking is conducted with the explicit permission of the system owner to
   - [Information Gathering](#information-gathering)
   - [Handshake Logging](#handshake-logging)
   - [Password Cracking](#password-cracking)
-  - [TODO Defense](#todo-defense)
+  - [Defense](#defense)
 - [Quick Win](#quick-win)
 - [Conclusion](#conclusion)
 - [Resources](#resources)
@@ -163,10 +163,18 @@ This command will use the rockyou.txt wordlist to try and crack the password. Th
 
 If the password is in the wordlist, aircrack-ng will display it in the terminal window. If the password isn't in the wordlist, you can try using a different wordlist or creating your own.
 
-## TODO Defense
+## Defense
 1. **Detect**
+
+To identify intrusions on your network, simply go to your router's web page and check the connected devices.
+
 2. **Evict**
+
+Once you have detected an imposter, block its MAC address.
+
 3. **Harden**
+
+Now, strengthen your password and reconnect all your devices.
 
 # Quick Win
 1. **Find the name of your card interface:**
@@ -196,7 +204,9 @@ If the password is in the wordlist, aircrack-ng will display it in the terminal 
 
 # Conclusion
 
-In this workshop, you've been introduced to ethical hacking, learned about WPA and WPA2, and gained practical knowledge about initiating monitor mode, gathering information, logging handshakes, and password cracking. Ethical hacking is a valuable skill when used responsibly and with explicit authorization from network owners. Continue to explore and apply these techniques in an ethical and legal manner to enhance your cybersecurity knowledge and contribute to a safer digital environment.
+In this workshop, you have been introduced to ethical hacking, learned about WPA and WPA2, and gained practical knowledge about initiating monitor mode, gathering information, logging handshakes, and password cracking. Having understood the vulnerabilities, you have learned to detect a threat, then to evict it, and finally, to harden your network. 
+
+Ethical hacking is a valuable skill when used responsibly and with explicit authorization from network owners. Continue to explore and apply these techniques in an ethical and legal manner to enhance your cybersecurity knowledge and contribute to a safer digital environment.
 
 # Resources
    - https://www.wikihow.com/Hack-WPA/WPA2-Wi-Fi-with-Kali-Linux
