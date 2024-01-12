@@ -164,6 +164,7 @@ This command will use the rockyou.txt wordlist to try and crack the password. Th
 If the password is in the wordlist, aircrack-ng will display it in the terminal window. If the password isn't in the wordlist, you can try using a different wordlist or creating your own.
 
 ## Defense
+TODO : Add photos
 1. **Detect**
 
 To identify intrusions on your network, simply go to your router's web page and check the connected devices.
@@ -209,5 +210,5 @@ In this workshop, you have been introduced to ethical hacking, learned about WPA
 Ethical hacking is a valuable skill when used responsibly and with explicit authorization from network owners. Continue to explore and apply these techniques in an ethical and legal manner to enhance your cybersecurity knowledge and contribute to a safer digital environment.
 
 # Resources
-   - https://www.wikihow.com/Hack-WPA/WPA2-Wi-Fi-with-Kali-Linux
-   - https://www.youtube.com/watch?v=yytbaZ8cGYE
+* Wikihow website: https://www.wikihow.com/Hack-WPA/WPA2-Wi-Fi-with-Kali-Linux
+* https://www.youtube.com/watch?v=yytbaZ8cGYE
