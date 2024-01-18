@@ -21,6 +21,7 @@ Ethical hacking is conducted with the explicit permission of the system owner to
     - [Get the open ports](#get-the-open-ports)
     - [Get the services](#get-the-services)
     - [Get the OS](#get-the-os)
+  - [Defense](#defense)
 - [Conclusion](#conclusion)
 - [References](#references)
 
@@ -116,7 +117,37 @@ Just for fun, the official machine description is :
 Some folks may already be aware of Metasploitable, an intentionally vulnerable virtual machine designed for training, exploit testing, and general target practice. Unlike other vulnerable virtual machines, Metasploitable focuses on vulnerabilities at the operating system and network services layer instead of custom, vulnerable applications. I am happy to announce the release of Metasploitable 2, an even better punching bag for security tools like Metasploit, and a great way to practice exploiting vulnerabilities that you might find in a production environment.
 ```
 
-You can find the VM here: https://www.vulnhub.com/entry/metasploitable-2,29/
+1. **Download the VM files**:
+    You can found the VM files in a .zip on the Vulnhub website (https://www.vulnhub.com/entry/metasploitable-2,29/) 
+2. **Extract the files**
+   <p style="text-align:center;">
+      <img src="Nmap_fundamentals_Files/files.png"/>
+    </p>
+    Once you have extract the files, you should find a file named Metasploitable.vmdk.
+3. **Create a new VM**:
+   <p style="text-align:center;">
+      <img src="Nmap_fundamentals_Files/vm-0.png"/>
+    </p>
+    <p style="text-align:center;">
+      <img src="Nmap_fundamentals_Files/vm-1.png"/>
+    </p>
+    When you create a new VM, you don't have to choose for an ISO file. This is because you have all you need in the .vmdk.
+4. **Choose the hardware**:
+   <p style="text-align:center;">
+      <img src="Nmap_fundamentals_Files/vm-2.png"/>
+    </p>
+    For this virtual machine, you don't need too much power. Only one processor and 2048 MB of RAM is sufficant.
+5. **Choose the virtual hard disk**
+   <p style="text-align:center;">
+      <img src="Nmap_fundamentals_Files/vm-3.png"/>
+    </p>
+    Here, the virtual hard disk is already existing. It is the famous <em>Metasploitable.vmdk</em>.
+6. **Summary**:
+   <p style="text-align:center;">
+      <img src="Nmap_fundamentals_Files/vm-4.png"/>
+    </p>
+7. **Network**:
+8. **Start the VM**
 
 ## Scan the target
 
@@ -130,10 +161,91 @@ nmap [target ip] -p-
 
 **Note**: The `-p-` flag allow to scan all the ports of the machine.
 
+```
+Nmap scan report for 10.0.2.5
+Host is up (0.00052s latency).
+Not shown: 65505 closed ports
+PORT      STATE SERVICE
+21/tcp    open  ftp
+22/tcp    open  ssh
+23/tcp    open  telnet
+25/tcp    open  smtp
+53/tcp    open  domain
+80/tcp    open  http
+111/tcp   open  rpcbind
+139/tcp   open  netbios-ssn
+445/tcp   open  microsoft-ds
+512/tcp   open  exec
+513/tcp   open  login
+514/tcp   open  shell
+1099/tcp  open  rmiregistry
+1524/tcp  open  ingreslock
+2049/tcp  open  nfs
+2121/tcp  open  ccproxy-ftp
+3306/tcp  open  mysql
+3632/tcp  open  distccd
+5432/tcp  open  postgresql
+5900/tcp  open  vnc
+6000/tcp  open  X11
+6667/tcp  open  irc
+6697/tcp  open  ircs-u
+8009/tcp  open  ajp13
+8180/tcp  open  unknown
+8787/tcp  open  msgsrvr
+38894/tcp open  unknown
+46198/tcp open  unknown
+46777/tcp open  unknown
+50447/tcp open  unknown
+
+Nmap done: 1 IP address (1 host up) scanned in 5.39 seconds
+```
+
 ### Get the services
 
 ```
 nmap [target ip] -sV
+```
+
+```
+Nmap scan report for 10.0.2.5
+Host is up (0.00021s latency).
+Not shown: 977 closed ports
+PORT     STATE SERVICE     VERSION
+21/tcp   open  ftp         vsftpd 2.3.4
+22/tcp   open  ssh         OpenSSH 4.7p1 Debian 8ubuntu1 (protocol 2.0)
+23/tcp   open  telnet      Linux telnetd
+25/tcp   open  smtp        Postfix smtpd
+53/tcp   open  domain      ISC BIND 9.4.2
+80/tcp   open  http        Apache httpd 2.2.8 ((Ubuntu) DAV/2)
+111/tcp  open  rpcbind     2 (RPC #100000)
+139/tcp  open  netbios-ssn Samba smbd 3.X - 4.X (workgroup: WORKGROUP)
+445/tcp  open  netbios-ssn Samba smbd 3.X - 4.X (workgroup: WORKGROUP)
+512/tcp  open  exec        netkit-rsh rexecd
+513/tcp  open  login?
+514/tcp  open  tcpwrapped
+1099/tcp open  java-rmi    GNU Classpath grmiregistry
+1524/tcp open  bindshell   Metasploitable root shell
+2049/tcp open  nfs         2-4 (RPC #100003)
+2121/tcp open  ftp         ProFTPD 1.3.1
+3306/tcp open  mysql       MySQL 5.0.51a-3ubuntu5
+5432/tcp open  postgresql  PostgreSQL DB 8.3.0 - 8.3.7
+5900/tcp open  vnc         VNC (protocol 3.3)
+6000/tcp open  X11         (access denied)
+6667/tcp open  irc         UnrealIRCd
+8009/tcp open  ajp13       Apache Jserv (Protocol v1.3)
+8180/tcp open  http        Apache Tomcat/Coyote JSP engine 1.1
+
+1 service unrecognized despite returning data. If you know the service/version, please submit the following fingerprint at https://nmap.org/cgi-bin/submit.cgi?new-service :
+
+SF-Port513-TCP:V=7.80%I=7%D=1/17%Time=65A7B8A3%P=x86_64-pc-linux-gnu%r(Ker
+
+SF:beros,1,"\x01");
+
+Service Info: Hosts:  metasploitable.localdomain, irc.Metasploitable.LAN; OSs: Unix, Linux; CPE: cpe:/o:linux:linux_kernel
+
+Service detection performed. Please report any incorrect results at https://nmap.org/submit/ .
+
+Nmap done: 1 IP address (1 host up) scanned in 155.62 seconds
 ```
 
 ### Get the OS
@@ -144,9 +256,17 @@ nmap [target ip] -O -sn
 
 And now, you can play as you want try different combinations of nmap options. If you are curious, you can read the documentation of nmap by using `man nmap` command.
 
+## Defense
+TODO : Add photos
+1. **Detect**
+
+cf cyberjtsu
+
+2. **Harden**
+
 # Conclusion
 
-TODO
+Covering a range of topics from basic Nmap options and scan types to practical deployment on a vulnerable target, the workshop provided a comprehensive introduction to Nmap's capabilities. Participants gained insights into its applications for network discovery, security auditing, and vulnerability identification.
 
 Ethical hacking is a valuable skill when used responsibly and with explicit authorization from network owners. Continue to explore and apply these techniques in an ethical and legal manner to enhance your cybersecurity knowledge and contribute to a safer digital environment.
 
