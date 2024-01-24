@@ -260,9 +260,10 @@ And now, you can play as you want try different combinations of nmap options. If
 TODO : Add photos
 1. **Detect**
 
-cf cyberjtsu
+cf cyberjtsu ou wireshark
 
 2. **Harden**
+firewalling (ufw), updates
 
 # Conclusion
 
