@@ -164,18 +164,37 @@ This command will use the rockyou.txt wordlist to try and crack the password. Th
 If the password is in the wordlist, aircrack-ng will display it in the terminal window. If the password isn't in the wordlist, you can try using a different wordlist or creating your own.
 
 ## Defense
-TODO : Add photos
 1. **Detect**
 
 To identify intrusions on your network, simply go to your router's web page and check the connected devices.
 
+   <p style="text-align:center;">
+      <img src="WPA-WPA2_Files/defense-0.jpg"/>
+   </p>
+
 2. **Evict**
 
-Once you have detected an imposter, block its MAC address.
+Once you have detected an imposter, you can block its MAC address.
+
+   <p style="text-align:center;">
+      <img src="WPA-WPA2_Files/defense-1.jpg"/>
+   </p>
+
+   <p style="text-align:center;">
+      <img src="WPA-WPA2_Files/defense-2.jpg"/>
+   </p>
+
+   <p style="text-align:center;">
+      <img src="WPA-WPA2_Files/defense-3.jpg"/>
+   </p>
 
 3. **Harden**
 
 Now, strengthen your password and reconnect all your devices.
+
+   <p style="text-align:center;">
+      <img src="WPA-WPA2_Files/defense-4.jpg"/>
+   </p>
 
 # Quick Win
 1. **Find the name of your card interface:**
