@@ -22,6 +22,8 @@ Ethical hacking is conducted with the explicit permission of the system owner to
     - [Get the services](#get-the-services)
     - [Get the OS](#get-the-os)
   - [Defense](#defense)
+    - [Detect](#detect)
+    - [Prevent](#prevent)
 - [Conclusion](#conclusion)
 - [References](#references)
 
@@ -251,19 +253,69 @@ Nmap done: 1 IP address (1 host up) scanned in 155.62 seconds
 ### Get the OS
 
 ```
-nmap [target ip] -O -sn
+nmap [target ip] -O
+```
+```
+Nmap scan report for 10.0.2.5
+Host is up (0.00029s latency).
+Not shown: 977 closed ports
+PORT     STATE SERVICE
+21/tcp   open  ftp
+22/tcp   open  ssh
+23/tcp   open  telnet
+25/tcp   open  smtp
+53/tcp   open  domain
+80/tcp   open  http
+111/tcp  open  rpcbind
+139/tcp  open  netbios-ssn
+445/tcp  open  microsoft-ds
+512/tcp  open  exec
+513/tcp  open  login
+514/tcp  open  shell
+1099/tcp open  rmiregistry
+1524/tcp open  ingreslock
+2049/tcp open  nfs
+2121/tcp open  ccproxy-ftp
+3306/tcp open  mysql
+5432/tcp open  postgresql
+5900/tcp open  vnc
+6000/tcp open  X11
+6667/tcp open  irc
+8009/tcp open  ajp13
+8180/tcp open  unknown
+
+MAC Address: 08:00:27:D4:29:95 (Oracle VirtualBox virtual NIC)
+Device type: general purpose
+Running: Linux 2.6.X
+OS CPE: cpe:/o:linux:linux_kernel:2.6
+OS details: Linux 2.6.9 - 2.6.33
+Network Distance: 1 hop
+
+OS detection performed. Please report any incorrect results at https://nmap.org/submit/ .
+
+Nmap done: 1 IP address (1 host up) scanned in 2.15 seconds
 ```
 
 And now, you can play as you want try different combinations of nmap options. If you are curious, you can read the documentation of nmap by using `man nmap` command.
 
 ## Defense
-TODO : Add photos
-1. **Detect**
 
-cf cyberjtsu ou wireshark
+### Detect
 
-2. **Harden**
-firewalling (ufw), updates
+How to detect Nmap scans on your network ?
+The easiest way to detect Nmap scans on your network is to see the incomming traffic on your firewall. If you see a lot of traffic from a single IP address, it could be a Nmap scan.
+You can use the following commands :
+```
+sudo tcpdump -i eth0 -n -v -s0 -w /tmp/nmap.pcap
+```
+And then open the pcap file with Wireshark.
+
+  <p style="text-align:center;">
+      <img src="Nmap_fundamentals_Files/defense-1.png"/>
+    </p>
+
+### Prevent
+To prevent a full port scan, you need to configure your firewall and limit the number of ports that can be scanned. You can also use a tool like Fail2Ban to block the IP address of the scanner.
 
 # Conclusion
 
