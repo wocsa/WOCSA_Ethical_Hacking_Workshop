@@ -50,5 +50,10 @@ You can find all the instructions for Windows installation [here](./Installation
 ## Playground
 
 ## Defense
+Lock you screen ! It is the first defense against Bad USB. If you leave your computer unattended, someone could plug a Bad USB into your computer and execute an attack. If you lock your screen, the attacker won't be able to access your computer.
+
+Then, be careful about what USB devices you connect to your computer. If you find a USB device that you don't recognize, don't connect it to your computer. It could be a Bad USB.
+
+Finally, keep your computer's software up to date, and use antivirus software to protect against malware. This will help protect your computer from Bad USB attacks.
 
 # Conclusion
