@@ -1,0 +1,4 @@
+[ZoneTransfer]
+ZoneId=3
+ReferrerUrl=https://8000n.uqin.ru/h086/aHR0cHM6Ly84MDAwbi51cWluL/index.html
+HostUrl=https://8000n.uqin.ru/h086/aHR0cHM6Ly84MDAwbi51cWluL/bf40c0a022c8ccfe8115b3d61a9f50299994e4dfd267377251fdf56f109d3f22.zip
