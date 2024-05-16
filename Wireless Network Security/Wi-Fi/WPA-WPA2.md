@@ -19,25 +19,11 @@ Ethical hacking is conducted with the explicit permission of the system owner to
 
 # Introduction
 
-**WPA (Wi-Fi Protected Access):**
+WiFi standards emerged in 1997 under the name IEEE 802.11 standard. The security mechanism proposed by this first standard was the optional activation of the WEP protocol (Wired Equivalent Privacy). By 2001, vulnerabilities were discovered within this protocol, allowing a remote attacker to retrieve the cryptographic keys used to encrypt communications. Now considered weak and obsolete, WEP was replaced by WPA (WiFi Protected Access) in 2003.
 
-WPA was developed as a response to the serious security flaws in the earlier WEP (Wired Equivalent Privacy) protocol. It was designed to provide stronger encryption and better protection against unauthorized access to Wi-Fi networks.
+The first version of WPA used the TKIP (Temporal Key Integrity Protocol) protocol, which corrected some of WEP's weaknesses while retaining the same encryption algorithm (RC4) for hardware compatibility reasons. However, WPA-TKIP also became obsolete as attacks that could decrypt certain messages within minutes were published starting in 2008. It is also possible to use the AES algorithm to encrypt WPA network communications, but this does not fix all known vulnerabilities.
 
-1. **Temporal Key Integrity Protocol (TKIP):** WPA introduced TKIP, a dynamic encryption mechanism. TKIP regularly changes the encryption keys during data transmission, making it much more challenging for attackers to decipher the keys through methods like packet sniffing. This dynamic key rotation enhances the security of WPA-protected networks.
-
-2. **Authentication and Encryption:** WPA employs 802.1X/EAP (Extensible Authentication Protocol) for authentication. It enables more secure and flexible user authentication methods, such as username and password or digital certificates. This replaces the weaker pre-shared keys (PSK) used in WEP. For encryption, WPA relies on TKIP, which is stronger than WEP's encryption but not as robust as what WPA2 would later introduce.
-
-3. **PSK Mode:** WPA introduced the concept of a Pre-Shared Key (PSK) mode, which simplifies network setup for home users. In PSK mode, users enter a passphrase to authenticate and establish a secure connection. This passphrase is used to generate encryption keys.
-
-**WPA2 (Wi-Fi Protected Access 2):**
-
-WPA2 represents a significant improvement over WPA, primarily by introducing the Advanced Encryption Standard (AES) and addressing some vulnerabilities.
-
-1. **AES Encryption:** The most notable enhancement in WPA2 is the adoption of AES for encryption. AES is a symmetric encryption algorithm considered highly secure and efficient. It replaced TKIP as the mandatory encryption method, providing a much stronger defense against decryption attempts.
-
-2. **Authentication Methods:** WPA2 continues to support 802.1X/EAP for enterprise-level authentication, offering robust user authentication methods. For home networks, it retains the PSK mode, but it is recommended to use a strong, complex passphrase to maximize security.
-
-3. **Robust Security:** WPA2 is known for its robust security, making it extremely difficult for attackers to compromise the encryption keys. It offers a high level of protection against brute-force attacks and unauthorized access.
+The currently recommended protocol for securing a WiFi network is WPA2, released in 2004, shortly after WPA. This protocol is much more robust than its predecessors, but it still has certain vulnerabilities that we will discuss in this article. WPA3 protocol was released in 2018 to address the vulnerabilities of WPA2. It is still very little used because WPA2 offers a satisfactory level of security, and some devices are incompatible with this new security mechanism. Weaknesses were also discovered in this protocol shortly after its publication.
 
 **Known Vulnerabilities in WPA and WPA2:**
 
@@ -62,6 +48,9 @@ To maintain Wi-Fi network security, it is essential to use strong, complex passp
 </p>
 <p style="text-align:center;">
    <a href="https://www.youtube.com/watch?v=yytbaZ8cGYE">Explicative video</a>
+</p>
+<p style="text-align:center;">
+   <a href="https://www.xmco.fr/wp-content/uploads/2022/12/XMCO-ActuSecu-58-Conti-Lapsus-WiFi.pdf">Explicative document (p.30)</a>
 </p>
 
 # Workshop
