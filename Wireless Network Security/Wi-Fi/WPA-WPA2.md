@@ -196,6 +196,8 @@ Now, strengthen your password and reconnect all your devices.
       <img src="WPA-WPA2_Files/defense-4.jpg"/>
    </p>
 
+Also, you can activate Protected Management Frames (PMF) in order to avoid deauthentication from unverified users.
+
 # Quick Win
 1. **Find the name of your card interface:**
    ```bash
@@ -231,3 +233,4 @@ Ethical hacking is a valuable skill when used responsibly and with explicit auth
 # Resources
 * Wikihow website: https://www.wikihow.com/Hack-WPA/WPA2-Wi-Fi-with-Kali-Linux
 * https://www.youtube.com/watch?v=yytbaZ8cGYE
+* XMCO: https://www.xmco.fr/wp-content/uploads/2022/12/XMCO-ActuSecu-58-Conti-Lapsus-WiFi.pdf
