@@ -129,9 +129,11 @@ sudo apt install aircrack-ng
    Open a new terminal. Make sure airodump-ng is still running in original terminal window, and drag it to another place on your desktop so both terminals are visible.
 
    Run this command, replacing STATION BSSID with the BSSID of the client that connected to the network, and NETWORK BSSID with the router's BSSID: `aireplay-ng -0 2 -a STATION BSSID -c NETWORK BSSID wlan0mon`.
-   This command will send 2 deauth packets to disconnect the client from the network. 
+   This command will send 2 deauth packets to disconnect the client from the network.
 
-   Don't try to send more than thi, sending too many packets could prevent the client from reconnecting and generating the handshake.
+   If needed, you can change the channel of your Wi-Fi adapter like this: `iw wlan0mon set channel 1`.
+
+   Don't try to send more than this, sending too many packets could prevent the client from reconnecting and generating the handshake.
    As long as you're close enough to the target client, they'll be disconnected from the router and forced to reconnect with a handshake. If this doesn't work, move closer to the client.
    As soon as the client reconnects, all of the information you'll need to crack the password will be available.
 
