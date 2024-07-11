@@ -1,5 +1,10 @@
 #include "DigiKeyboard.h"
 
+/**
+ * This workshop is for educational purposes only.
+ * Ethical hacking is conducted with the explicit permission of the system owner to improve security.
+ */
+
 void setup() {
     // Open the terminal
     DigiKeyboard.delay(2000);
