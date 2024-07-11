@@ -6,7 +6,7 @@ Go to the Arduino website then [download and install the Arduino IDE](https://ww
 From the top menu of the Arduino IDE application, select File → Preferences to open the Preferences dialog box.
 
 Paste the following in the Additional Boards Manager URLs: box of the Preferences dialog box.
-http://digistump.com/package_digistump_index.json
+https://raw.githubusercontent.com/ArminJo/DigistumpArduino/master/package_digistump_index.json
 
 ![arduino-preferences-urls](./InstallArduinoIDE/arduino-preferences-urls.png "arduino-preferences-urls")
 
