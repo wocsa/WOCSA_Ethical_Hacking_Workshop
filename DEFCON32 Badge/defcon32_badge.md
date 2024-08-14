@@ -12,6 +12,7 @@ This workshop use the [DEFCON 32 Badge](https://www.tomshardware.com/raspberry-p
 [Official DEFCON32 Badge Repository](https://media.defcon.org/DEF%20CON%2032/DEF%20CON%2032%20badge/)
 [Firmware Creator project description by DimitryGr](https://dmitry.gr/?r=06.+Thoughts&proj=11.+RP2350#_TOC_938ebfd37c7b6cb6656c4bcb87fca874)
 [GB interface to badge extra features by DimitryGr](https://docs.google.com/document/d/1COY5n0HhBcBq7ILwsKtOjV-_0-arNPkk_qBH9PI9fms/edit#heading=h.gldd1ycy1odt)
+[Badge Writeup by Dietcholoatebar](https://docs.google.com/document/d/1Jff1UbKaRGoHoAug1c0r6a4Y-MYruvgVORGG8c63sNQ/edit#heading=h.38ffvio0tkya)
 
 ### Firmware (including bare-metal Emulator uGB)
 [Creator's Firmware Source Code 1.5 by DimitryGr](http://dmitry.gr/images/defcon_code_1.5.0.tar.bz2)
