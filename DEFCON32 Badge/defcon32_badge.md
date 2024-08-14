@@ -8,9 +8,10 @@ To discuss about this workshop you can join our [WOCSA discord](https://discord.
 This workshop use the [DEFCON 32 Badge](https://www.tomshardware.com/raspberry-pi/raspberry-pi-pico/raspberry-pi-pico-2-developer-demonstrates-running-doom-on-rp2350-powered-def-con-32-badge)  as hardware material.
 
 ## Related links
+[Badge Creator project description by Mar Williams](https://marwilliams.art/blogs/projects/def-con-32-badges)
 [Official DEFCON32 Badge Repository](https://media.defcon.org/DEF%20CON%2032/DEF%20CON%2032%20badge/)
-[Firmware Creator project description](https://dmitry.gr/?r=06.+Thoughts&proj=11.+RP2350#_TOC_938ebfd37c7b6cb6656c4bcb87fca874)
-[Badge Creator project description](https://marwilliams.art/blogs/projects/def-con-32-badges)
+[Firmware Creator project description by DimitryGr](https://dmitry.gr/?r=06.+Thoughts&proj=11.+RP2350#_TOC_938ebfd37c7b6cb6656c4bcb87fca874)
+[GB interface to badge extra features by DimitryGr](https://docs.google.com/document/d/1COY5n0HhBcBq7ILwsKtOjV-_0-arNPkk_qBH9PI9fms/edit#heading=h.gldd1ycy1odt)
 
 ### Firmware (including bare-metal Emulator uGB)
 [Creator's Firmware Source Code 1.5 by DimitryGr](http://dmitry.gr/images/defcon_code_1.5.0.tar.bz2)
