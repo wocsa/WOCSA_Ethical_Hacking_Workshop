@@ -2,15 +2,23 @@
 This workshop is for educational purposes only.
 Ethical hacking is conducted with the explicit permission of the system owner to improve security.
 
+** Do this workshop with a Linux system installed directly on the computer might be easier than with MS Windows or with a virtual machine **
+
+![WOCSA Custom Micropython Firmware](WOCSA_Custom_Firmware.jpeg)
+![WOCSA Custom DEFCON32 ROM](WOCSA_Custom_ROM_IR_Buttons.png)
+
+# DEFCON 32 Badge Workshop
+This workshop use the [DEFCON 32 Badge](https://www.tomshardware.com/raspberry-pi/raspberry-pi-pico/raspberry-pi-pico-2-developer-demonstrates-running-doom-on-rp2350-powered-def-con-32-badge)  as hardware material.
+
+
 To discuss about this workshop you can join our [WOCSA discord](https://discord.gg/P2YH3ubC) in ETHICAL HACKING WORKSHOPS category.
 
-# DEFCON 32
-This workshop use the [DEFCON 32 Badge](https://www.tomshardware.com/raspberry-pi/raspberry-pi-pico/raspberry-pi-pico-2-developer-demonstrates-running-doom-on-rp2350-powered-def-con-32-badge)  as hardware material.
 
 The goal of the workshop is to be able to record and replay or forge IR UART packet to add items in remote DEFCON32 Badge ROM Inventory.
 There is 12 slots in the inventory of the DEFCON32 ROM.
 
-This workshop has 3 levels of difficulty:
+
+This workshop has 4 levels of difficulty:
 1) Discovery
    a) fix bugs of the initial version of the badge (game saving error, ir emitter/receiver issue)
    b) flash with the rickrool firmware special feature menu to send rickroll music to other badges.
@@ -20,6 +28,7 @@ This workshop has 3 levels of difficulty:
 3) Update the DEFON32 ROM
    a) add in adversary village room a WOCSA button to read UART IR message and store the message in a variable
    b) add in adversary village room a WOCSA button to send stored to IR Remote badge
+4) Extend DEFCON32 FIRMWARE capabilities with SOA I2C capabilities using register command 13 and 14 copy IR calls to replace with I2C calls
 
 ## Related links
 [Badge Creator project description by Mar Williams](https://marwilliams.art/blogs/projects/def-con-32-badges)
@@ -45,6 +54,7 @@ This workshop has 3 levels of difficulty:
 ### Micropython firmware
 [Micropython tutorial from p0ns](https://github.com/p0ns/micropython-dc32)
 
+
 ### SD Card
 [Unofficial SD Card files repository by BillyBriant](https://github.com/billyjbryant/DC32-Badge-Hack/tree/main/DC32BadgeSD)
 
@@ -53,9 +63,9 @@ This workshop has 3 levels of difficulty:
 [Game Development IDE used for the Official ROM](https://github.com/chrismaltby/gb-studio/)
 [Windows Bluescreen ROM](https://github.com/rootabeta/BSoDEFCON/tree/main)
 
-# Troubleshoot first then play
-## SD Card issue
-### FAT filesystem corruption
+## Level 1: Discovery
+### SD Card issue
+#### FAT filesystem corruption
 The FAT system contains error in the SD Card.
 But the SD Card could by physically damaged too.
 
@@ -70,16 +80,46 @@ But the SD Card could by physically damaged too.
 
 Note: disk copy from original SD Card is possible using ddrescue
 
-### Game Save issue
+#### Game Save issue
 1. Create a new folder on the root of the SD card named "SAVE"
 2. Install firmware 1.5 (But the game crash when you take the stairs)
 [source](https://discord.com/channels/867438418212683796/1262488625799495732/1271261374537797798)
 
 3. copy original ROM on SD CARD then load it to have ROM without bug
 
-### Filenames unsupported 
+#### Filenames unsupported 
 Only FAT filename are supported even on FAT32 filesystem.
 Use tool to rename filenames and sanitize them like detox.
+
+### FIRMWARE Upgrade
+Badge must be powered off prior to start.
+1. Maintain pressed Boot button then plug the computer with USB C cable
+2. Continue to maintain the Boot button then press shortly Reset button
+3. A new usb storage appear named RP2350 on the computer
+4. Upload the firmware you want with the name FIRMWARE.uf2 then wait badge to reboot (usb storage must disappear and re-appear)
+5. Press Reset button and wait
+
+## Level 2: Mimic the standard IR messages
+
+1. Build the micropython firmware from [source code fork for rp2 rp2350 by dpgeorge](https://github.com/dpgeorge/micropython/tree/rp2-add-rp2350)  with the [LCD Driver ST7789](https://github.com/russhughes/st7789_mpy)
+2. flash the micropython firmware
+3. install Thonny IDE ```pip install thonny```
+4. plug the Badge in USB C with the Computer in Thonny IDE configure run environment on the Badge
+   a) Configure Interpret: Menu Run => Configure Interpreter => Interpreter kind: Micropython (Raspberry Pi Pico) => Port or WebREPL: Try to detect port automatically => OK
+   b) Show file view at the left: View => Files
+5. write a main.py file with PIN related to HW wiring (from creator firmware source code or from the hardware schematic pdf)
+6. Analyse IR protocol from DEFCON32 ROM source code with GBStudio then from the FIRMWARE 1.5.0 source code
+7. Write a simple IR receiver code and send inventory item from a standard FRIMWARE+ROM Badge to your code
+8. Write a simple IR emitter to send the same messafe to a standard FRIMWARE+ROM Badge
+9. Write a simple menu on the display to use IR reception function then store the message and send it using the IR emitter function
+
+## Level 3: Upgrade the official DEFCON32 ROM with WOCSA IR mimic buttons
+1. Open the official DEFCON32 ROM with GBStudio
+2. Create a WOCSA sprite button to receive IR message and store it in a variable and add this sprite with a trigger in the Adversarial Village Room
+3. Modify the IR Reception Scene to be able to use it with the WOCSA IR Receiver Button
+4. Create a WOCSA sprite button to send IR stored message to remote Badge
+5. Modify the IR Emitter Scene to be able to use it with the WOCSA IR Emitter button
+
 
 
 

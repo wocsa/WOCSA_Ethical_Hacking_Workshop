@@ -10,8 +10,11 @@ import vga2_16x16 as font
 IR_RX_PIN = 27  # Pin connected to RXD of ZHX1010
 IR_TX_PIN = 26  # Pin connected to TXD of ZHX1010
 IRDA_SD_PIN = 7  # Pin connected to SD of ZHX1010 (Shutdown Control)
+BUTTON_LEFT_PIN = 19  # Pin for SW_LEFT
 BUTTON_UP_PIN = 18  # Pin for SW_UP
 BUTTON_DOWN_PIN = 17  # Pin for SW_DOWN
+BUTTON_RIGHT_PIN = 16  # Pin for SW_RIGHT
+BUTTON_START_PIN = 22  # Pin for SW_START
 BUTTON_SELECT_PIN = 23  # Pin for SW_SELECT
 BUTTON_A_PIN = 21  # Pin for SW_A
 BUTTON_B_PIN = 20  # Pin for SW_B
