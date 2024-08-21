@@ -10,9 +10,6 @@ pulse_duration = bit_time * 3 / 16
 IR_RX_PIN = 27  # Pin connected to RXD of ZHX1010
 IRDA_SD_PIN = 7  # Pin connected to SD of ZHX1010 (Shutdown Control)
 
-# Confirmation byte
-CONFIRM_BYTE = 0xA3
-
 # Setup UART (for RXD)
 uart = UART(1, baudrate=baud_rate, bits=8, parity=None, stop=1, rx=Pin(IR_RX_PIN))
 
@@ -54,34 +51,17 @@ def receive_byte():
         pass
     return byte
 
-def receive_data(num_bytes):
-    # Wait for confirmation byte first
-    received_confirm = receive_byte()
-#     if received_confirm != CONFIRM_BYTE:
-#         print("Error: Confirmation byte not received or incorrect.")
-#         return None
-    
-    received = []
-    for _ in range(num_bytes):
-        received.append(receive_byte())
-    return bytes(received)
-
-# Example usage
+def continuous_receive():
+    print("Starting continuous reception...")
+    while True:
+        received_byte = receive_byte()
+        print(f"Received byte: {received_byte:02X}")  # Print received byte in hex format
 
 # Ensure the IRDA transceiver is enabled
 irda_sd.off()
 
-# Simulate some delay (time for the message to be sent and received)
-time.sleep(2)
-
-# Receive Message
-print("Waiting to receive message...")
-message_length = 13  # Length of "Hello, World!"
-received_message = receive_data(message_length)
-if received_message:
-    print("Received message:", received_message)
-else:
-    print("Failed to receive the correct confirmation byte.")
+# Start continuous reception
+continuous_receive()
 
 # Optionally disable the IRDA transceiver (put it in shutdown mode)
-irda_sd.on()
+# irda_sd.on()  # Uncomment this line if you want to manually stop the reception and disable the IR transceiver
