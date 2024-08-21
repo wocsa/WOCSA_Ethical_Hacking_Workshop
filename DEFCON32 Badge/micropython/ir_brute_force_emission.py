@@ -66,7 +66,7 @@ while True:
     send_data([random_number, checksum])
     
     # Wait for a short period before sending the next number
-    time.sleep(5)  # Adjust the delay as needed between sending messages
+    time.sleep(1)  # Adjust the delay as needed between sending messages
 
 # Optionally disable the IRDA transceiver (put it in shutdown mode)
 # irda_sd.on()  # Uncomment this line if you want to manually stop and disable the IR transceiver
