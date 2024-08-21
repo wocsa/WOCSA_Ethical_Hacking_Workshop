@@ -27,7 +27,7 @@ DISPLAY_BL_PIN = 10  # If you have backlight control
 uart = UART(1, baudrate=9600, bits=3, parity=None, stop=1, tx=IR_TX_PIN, rx=IR_RX_PIN)
 
 # Confirmation byte
-CONFIRM_BYTE = b'\xa3'
+CONFIRM_BYTE = 0xA3
 
 # list of messages for IR brute force
 bruteforce_list = [1,2,3,4,5,6,7,8,9,10,11,12]
@@ -57,9 +57,6 @@ def config(rotation=0, buffer_size=0, options=0):
         inversion=False)
 
 display = config(1, buffer_size=4096)  # rotation 3 for normal orientation, 1 for upside down
-
-# Initialize IRDA shutdown pin
-irda_sd = Pin(IRDA_SD_PIN, Pin.OUT)
 
 # Initialize buttons
 btn_up = Pin(BUTTON_UP_PIN, Pin.IN, Pin.PULL_UP)
@@ -99,9 +96,22 @@ def rainbow_cycle(wait):
         np.write()
         time.sleep(0.01)
 
+# Initialize IRDA shutdown pin
+irda_sd = Pin(IRDA_SD_PIN, Pin.IN)
+
+def set_irda_for_receive():
+    # Set the IRDA_SD pin as input (enable receive mode)
+    irda_sd.init(Pin.IN)
+
+def set_irda_for_transmit():
+    # Set the IRDA_SD pin as output and drive it low (enable transmit mode)
+    irda_sd.init(Pin.OUT)
+    irda_sd.value(0)
+
+
 def read_ir_signal():
     global stored_ir_signal
-    irda_sd.on()  # Enable ZHX1010 to receive
+    set_irda_for_receive()  # Configure for receiving
     display.text(font, "Reading IR Signal...", 10, 105, st7789.WHITE)
     
     received_data = b''
@@ -121,17 +131,23 @@ def read_ir_signal():
     display.text(font, "IR Signal Stored", 10, 105, st7789.WHITE)
     time.sleep(2)
 
+def calculate_checksum(item_number):
+    return ((item_number - 15) * 16 + item_number) & 0xFF
+
+
 def send_ir_signal(message):
     global stored_ir_signal
-    irda_sd.off()  # Enable ZHX1010 to transmit
+    set_irda_for_transmit()  # Configure for transmission
     display.text(font, "IR Signal Sending", 10, 140, st7789.WHITE)
     
     if stored_ir_signal:
         uart.write(stored_ir_signal)  # Send the stored data
         print(f"Sent IR data: {stored_ir_signal}")
     elif message:
-        uart.write(message)
+        #checksum_z = calculate_checksum(message)
+        uart.write(message.to_bytes(1, 'big'))
         print(f"Sent IR data: {message}")
+
     else:
         display.text(font, "No IR signal stored.", 10, 140, st7789.RED)
     
@@ -139,14 +155,13 @@ def send_ir_signal(message):
     time.sleep(2)
 
 def ir_bruteforce():
-    for i in range(1,13):
-        str(i).encode('ascii')
-        #m = i.to_bytes(1, 'big', False)
+    for i in range(0,100):
         display.text(font, "Sending: "+str(i), 10, 205,st7789.RED)
-        send_ir_signal(m)
-        while uart.read() != CONFIRM_BYTE:
-            send_ir_signal(m)
-            display.text(font, "Retry: "+str(i), 10, 205,st7789.RED)
+        send_ir_signal(i)
+        confirm_message=uart.read(1)
+#         while not confirm_message or confirm_message[0] != CONFIRM_BYTE:
+#             send_ir_signal(i)
+#             confirm_message=uart.read(1)
         
 
 def display_menu(selection):

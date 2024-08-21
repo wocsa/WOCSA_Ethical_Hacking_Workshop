@@ -28,6 +28,9 @@ This workshop use the [DEFCON 32 Badge](https://www.tomshardware.com/raspberry-p
 ### Alternative Operating System
 [Creator's rePalm Operating System](https://dmitry.gr/?r=05.Projects&proj=27.%20rePalm#_TOC_0734fd58b98b17e23027547eec1258f5)
 
+### Micropython firmware
+[Micropython tutorial from p0ns](https://github.com/p0ns/micropython-dc32)
+
 ### SD Card
 [Unofficial SD Card files repository by BillyBriant](https://github.com/billyjbryant/DC32-Badge-Hack/tree/main/DC32BadgeSD)
 
