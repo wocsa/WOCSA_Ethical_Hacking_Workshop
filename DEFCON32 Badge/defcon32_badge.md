@@ -7,6 +7,10 @@ To discuss about this workshop you can join our [WOCSA discord](https://discord.
 # DEFCON 32
 This workshop use the [DEFCON 32 Badge](https://www.tomshardware.com/raspberry-pi/raspberry-pi-pico/raspberry-pi-pico-2-developer-demonstrates-running-doom-on-rp2350-powered-def-con-32-badge)  as hardware material.
 
+The goal of the workshop is to be able to record and replay or forge IR UART packet to add items in remote DEFCON32 Badge ROM Inventory.
+There is 12 slots in the inventory of the DEFCON32 ROM.
+
+
 ## Related links
 [Badge Creator project description by Mar Williams](https://marwilliams.art/blogs/projects/def-con-32-badges)
 [Official DEFCON32 Badge Repository](https://media.defcon.org/DEF%20CON%2032/DEF%20CON%2032%20badge/)
