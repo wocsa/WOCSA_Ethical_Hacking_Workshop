@@ -10,6 +10,16 @@ This workshop use the [DEFCON 32 Badge](https://www.tomshardware.com/raspberry-p
 The goal of the workshop is to be able to record and replay or forge IR UART packet to add items in remote DEFCON32 Badge ROM Inventory.
 There is 12 slots in the inventory of the DEFCON32 ROM.
 
+This workshop has 3 levels of difficulty:
+1) Discovery
+   a) fix bugs of the initial version of the badge (game saving error, ir emitter/receiver issue)
+   b) flash with the rickrool firmware special feature menu to send rickroll music to other badges.
+2) Mimic the badge IR communication
+   a) Develop a micropython software able to record IR message from standard badge FIRMWARE+DEFCON32 ROM
+   b) Develop a micropython software able to forge or replay IR messages to the standard badge FIRMWARE+DEFCON32 ROM
+3) Update the DEFON32 ROM
+   a) add in adversary village room a WOCSA button to read UART IR message and store the message in a variable
+   b) add in adversary village room a WOCSA button to send stored to IR Remote badge
 
 ## Related links
 [Badge Creator project description by Mar Williams](https://marwilliams.art/blogs/projects/def-con-32-badges)
