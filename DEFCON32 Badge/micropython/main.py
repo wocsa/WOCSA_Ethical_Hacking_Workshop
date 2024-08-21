@@ -96,17 +96,20 @@ def rainbow_cycle(wait):
         np.write()
         time.sleep(0.01)
 
-# Initialize IRDA shutdown pin
-irda_sd = Pin(IRDA_SD_PIN, Pin.IN)
+# Initialize the shutdown pin as output
+irda_sd = Pin(IRDA_SD_PIN, Pin.OUT)
 
 def set_irda_for_receive():
-    # Set the IRDA_SD pin as input (enable receive mode)
-    irda_sd.init(Pin.IN)
+    # Activate the IR sensor by setting the shutdown pin low
+    irda_sd.off()  # Pull the shutdown pin low to enable the sensor
+    print("IR sensor activated.")
+    time.sleep(1)
 
 def set_irda_for_transmit():
-    # Set the IRDA_SD pin as output and drive it low (enable transmit mode)
-    irda_sd.init(Pin.OUT)
-    irda_sd.value(0)
+    # Activate the IR sensor by setting the shutdown pin low
+    irda_sd.on()  # Pull the shutdown pin low to enable the sensor
+    print("IR sensor activated.")
+    time.sleep(1)
 
 
 def read_ir_signal():
@@ -126,6 +129,7 @@ def read_ir_signal():
                 break
     
     irda_sd.off()  # Shutdown ZHX1010 to save power
+    
     stored_ir_signal = received_data  # Store the received data
     time.sleep(2)
     display.text(font, "IR Signal Stored", 10, 105, st7789.WHITE)
@@ -133,6 +137,19 @@ def read_ir_signal():
 
 def calculate_checksum(item_number):
     return ((item_number - 15) * 16 + item_number) & 0xFF
+
+def check_checksum(checksum):
+    CHECKSUM_Y = checksum // 16
+    CHECKSUM_X = checksum % 16
+    
+    # Validate X + Y = 15
+    if CHECKSUM_X + CHECKSUM_Y == 15:
+        VAR_RECEIVE_ITEM_NUMBER = CHECKSUM_X
+        print(f"Valid data received: {VAR_RECEIVE_ITEM_NUMBER}")
+        return VAR_RECEIVE_ITEM_NUMBER
+    else:
+        print(f"Invalid")
+        return False
 
 
 def send_ir_signal(message):
@@ -144,9 +161,9 @@ def send_ir_signal(message):
         uart.write(stored_ir_signal)  # Send the stored data
         print(f"Sent IR data: {stored_ir_signal}")
     elif message:
-        #checksum_z = calculate_checksum(message)
-        uart.write(message.to_bytes(1, 'big'))
-        print(f"Sent IR data: {message}")
+        checksum_z = calculate_checksum(message)
+        uart.write(checksum_z.to_bytes(1, 'big'))
+        print(f"Sent IR data: {checksum_z}")
 
     else:
         display.text(font, "No IR signal stored.", 10, 140, st7789.RED)
@@ -155,7 +172,7 @@ def send_ir_signal(message):
     time.sleep(2)
 
 def ir_bruteforce():
-    for i in range(0,100):
+    for i in range(0,13):
         display.text(font, "Sending: "+str(i), 10, 205,st7789.RED)
         send_ir_signal(i)
         confirm_message=uart.read(1)
