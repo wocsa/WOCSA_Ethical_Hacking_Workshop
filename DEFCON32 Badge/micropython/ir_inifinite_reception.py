@@ -1,105 +1,87 @@
 from machine import Pin, UART
 import time
 
-# Define UART for IR communication
+# Configuration
+baud_rate = 9600
+bit_time = 1 / baud_rate
+pulse_duration = bit_time * 3 / 16
+
+# Pin Definitions
 IR_RX_PIN = 27  # Pin connected to RXD of ZHX1010
-IR_TX_PIN = 26  # Pin connected to TXD of ZHX1010
 IRDA_SD_PIN = 7  # Pin connected to SD of ZHX1010 (Shutdown Control)
 
-# Initialize the IR receiver pin as input
-ir_rx = Pin(IR_RX_PIN, Pin.IN)
+# Confirmation byte
+CONFIRM_BYTE = 0xA3
 
-# Initialize the shutdown pin as output
+# Setup UART (for RXD)
+uart = UART(1, baudrate=baud_rate, bits=8, parity=None, stop=1, rx=Pin(IR_RX_PIN))
+
+# Setup IRDA shutdown control pin
 irda_sd = Pin(IRDA_SD_PIN, Pin.OUT)
 
-# Placeholder to store recorded signal
-recorded_signal = []
+# Ensure the IRDA transceiver is enabled (set SD pin low)
+irda_sd.off()
 
-def check_checksum(checksum):
-    CHECKSUM_Y = checksum // 16
-    CHECKSUM_X = checksum % 16
-    
-    # Validate X + Y = 15
-    if CHECKSUM_X + CHECKSUM_Y == 15:
-        VAR_RECEIVE_ITEM_NUMBER = CHECKSUM_X
-        print(f"Valid data received: {VAR_RECEIVE_ITEM_NUMBER}")
-        return VAR_RECEIVE_ITEM_NUMBER
+# IR Receiver Pin (for receiving bits)
+ir_receiver = Pin(IR_RX_PIN, Pin.IN)
+
+def receive_bit():
+    # Wait for start bit
+    while ir_receiver.value() == 1:
+        pass
+    time.sleep(bit_time / 2)  # Wait until the middle of the bit time
+
+    # Read bit value
+    pulse = ir_receiver.value()
+    if pulse == 1:
+        time.sleep(pulse_duration)
+        return 1
     else:
-        print(f"Invalid")
-        return False
+        time.sleep(bit_time - pulse_duration)
+        return 0
 
-def uart_parser(signal, data_bits=8, parity_bit=None, stop_bits=1):
-    frames = []
-    i = 0
-    while i < len(signal):
-        bit, value = signal[i]
+def receive_byte():
+    byte = 0
+    # Wait for start bit (0)
+    while receive_bit() != 0:
+        pass
+    # Read 8 bits of data (LSB first)
+    for i in range(8):
+        bit = receive_bit()
+        byte |= (bit << i)
+    # Wait for stop bit (1)
+    while receive_bit() != 1:
+        pass
+    return byte
 
-        # Look for the start bit (0)
-        if bit == 0:
-            i += 1
-            data = []
+def receive_data(num_bytes):
+    # Wait for confirmation byte first
+    received_confirm = receive_byte()
+#     if received_confirm != CONFIRM_BYTE:
+#         print("Error: Confirmation byte not received or incorrect.")
+#         return None
+    
+    received = []
+    for _ in range(num_bytes):
+        received.append(receive_byte())
+    return bytes(received)
 
-            # Collect data bits
-            for j in range(data_bits):
-                if i < len(signal):
-                    data_bit, _ = signal[i]
-                    data.append(data_bit)
-                    i += 1
-                else:
-                    break
-            
-            # Collect parity bit if applicable
-            parity = None
-            if parity_bit:
-                if i < len(signal):
-                    parity, _ = signal[i]
-                    i += 1
-            
-            # Collect stop bits and validate
-            stop_bit_ok = True
-            for _ in range(stop_bits):
-                if i < len(signal):
-                    stop_bit, _ = signal[i]
-                    if stop_bit != 1:
-                        stop_bit_ok = False
-                    i += 1
-                else:
-                    stop_bit_ok = False
-                    break
+# Example usage
 
-            if stop_bit_ok:
-                # Convert data bits to a uint8
-                byte_value = 0
-                for idx, bit in enumerate(data):
-                    byte_value |= (bit << idx)
-                frames.append(byte_value)
+# Ensure the IRDA transceiver is enabled
+irda_sd.off()
 
-        i += 1
+# Simulate some delay (time for the message to be sent and received)
+time.sleep(2)
 
-    return frames
+# Receive Message
+print("Waiting to receive message...")
+message_length = 13  # Length of "Hello, World!"
+received_message = receive_data(message_length)
+if received_message:
+    print("Received message:", received_message)
+else:
+    print("Failed to receive the correct confirmation byte.")
 
-
-
-def test_ir_sensor():
-    # Activate the IR sensor by setting the shutdown pin low
-    irda_sd.off()  # Pull the shutdown pin low to enable the sensor
-    print("IR sensor activated.")
-    time.sleep(1)
-    print("Recording IR signal...")
-    start_time = time.ticks_us()  # Record start time in microseconds
-    wait=True
-    while wait==True:  # Adjust the number of samples as needed
-        if ir_rx.value()==0:
-            while len(recorded_signal) < 5000:
-                pulse_duration = time.ticks_diff(time.ticks_us(), start_time)  # Measure pulse duration
-                recorded_signal.append((ir_rx.value(), pulse_duration))  # Store the state (high/low) and duration
-                start_time = time.ticks_us()  # Reset start time for the next measurement          
-            wait=False
-
-# Run the function to test the IR sensor
-test_ir_sensor()
-binary_output = uart_parser(recorded_signal)
-print(f"Binary Output: {binary_output}")
-print(f"Record Output: {recorded_signal}")
-for item in binary_output:
-    print(check_checksum(item))
+# Optionally disable the IRDA transceiver (put it in shutdown mode)
+irda_sd.on()

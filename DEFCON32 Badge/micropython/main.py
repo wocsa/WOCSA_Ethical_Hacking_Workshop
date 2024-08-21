@@ -1,10 +1,9 @@
-from machine import Pin, UART, SoftSPI
+from machine import Pin, SoftSPI
 import st7789
 import neopixel
 import time
 from random import randint
 import vga2_16x16 as font
-
 
 # Pin definitions based on the schematic and ZHX1010 datasheet
 IR_RX_PIN = 27  # Pin connected to RXD of ZHX1010
@@ -26,14 +25,16 @@ DISPLAY_CS_PIN = 9
 DISPLAY_DC_PIN = 5
 DISPLAY_BL_PIN = 10  # If you have backlight control
 
-# UART setup for IR communication
-uart = UART(1, baudrate=9600, bits=3, parity=None, stop=1, tx=IR_TX_PIN, rx=IR_RX_PIN)
+# Timing configuration for Slow IrDA
+baud_rate = 9600
+bit_time = 1 / baud_rate
+pulse_duration = bit_time * 3 / 16
 
 # Confirmation byte
 CONFIRM_BYTE = 0xA3
 
-# list of messages for IR brute force
-bruteforce_list = [1,2,3,4,5,6,7,8,9,10,11,12]
+# List of messages for IR brute force
+bruteforce_list = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
 
 # Variable to store received IR data
 stored_ir_signal = b''
@@ -101,38 +102,102 @@ def rainbow_cycle(wait):
 
 # Initialize the shutdown pin as output
 irda_sd = Pin(IRDA_SD_PIN, Pin.OUT)
+ir_led = Pin(IR_TX_PIN, Pin.OUT)  # IR LED for transmission
+ir_receiver = Pin(IR_RX_PIN, Pin.IN)  # IR receiver for receiving
 
-def set_irda_for_receive():
-    # Activate the IR sensor by setting the shutdown pin low
-    irda_sd.off()  # Pull the shutdown pin low to enable the sensor
-    print("IR sensor activated.")
-    time.sleep(1)
 
-def set_irda_for_transmit():
-    # Activate the IR sensor by setting the shutdown pin low
-    irda_sd.on()  # Pull the shutdown pin low to enable the sensor
-    print("IR sensor activated.")
-    time.sleep(1)
+def send_bit(bit):
+    if bit == 1:
+        ir_led.on()
+        time.sleep(pulse_duration)  # 3/16 of the bit time
+        ir_led.off()
+        time.sleep(bit_time - pulse_duration)
+    else:
+        ir_led.off()
+        time.sleep(bit_time)
+
+def send_byte(byte):
+    # Start bit (always 0)
+    send_bit(0)
+    # Data bits (LSB first)
+    for i in range(8):
+        send_bit((byte >> i) & 1)
+    # Stop bit (always 1)
+    send_bit(1)
+
+def send_data(data):
+    
+    # Send confirmation byte first
+    send_byte(CONFIRM_BYTE)
+    # Send the actual data
+    for byte in data:
+        send_byte(byte)
+    
+
+def receive_bit():
+    # Wait for start bit (0)
+    while ir_receiver.value() == 1:
+        pass
+    time.sleep(bit_time / 2)  # Wait until the middle of the bit time
+
+    pulse = ir_receiver.value()
+    if pulse == 1:
+        time.sleep(pulse_duration)
+        return 1
+    else:
+        time.sleep(bit_time - pulse_duration)
+        return 0
+
+def receive_byte():
+    byte = 0
+    # Wait for start bit (0)
+    while receive_bit() != 0:
+        pass
+    # Read 8 bits of data (LSB first)
+    for i in range(8):
+        bit = receive_bit()
+        byte |= (bit << i)
+    # Wait for stop bit (1)
+    while receive_bit() != 1:
+        pass
+    return byte
+
+def receive_data():
+    received = []
+    timeout = 0.5  # Increased timeout in seconds to determine the end of the transmission
+    last_received_time = time.ticks_ms()  # Record the time when the last byte was received
+    minimal_delay = 0.01  # Delay between checks to slow down the process
+
+    # Wait for confirmation byte first
+#     received_confirm = receive_byte()
+#     if received_confirm != CONFIRM_BYTE:
+#         print("Error: Confirmation byte not received or incorrect.")
+#         return None
+    
+    # Continuously receive data until no more data is detected
+    while True:
+        if time.ticks_diff(time.ticks_ms(), last_received_time) > timeout * 1000:
+            break  # Exit the loop if no data has been received for the timeout period
+        
+        if ir_receiver.value() == 0:  # Check if there is data to read
+            received.append(receive_byte())
+            last_received_time = time.ticks_ms()  # Update the time when data was last received
+        
+        time.sleep(minimal_delay)  # Add a small delay to slow down the read process
+    
+    return bytes(received)
 
 
 def read_ir_signal():
     global stored_ir_signal
-    set_irda_for_receive()  # Configure for receiving
+    irda_sd.off()  # Pull the shutdown pin low to enable the sensor
     display.text(font, "Reading IR Signal...", 10, 105, st7789.WHITE)
     
-    received_data = b''
-    while True:
-        if uart.any():
-            received_data += uart.read()
-            if received_data:  # If data is received
-                uart.write(CONFIRM_BYTE)  # Send confirmation byte
-                print(f"Received IR data: {received_data}")
-                display.text(font, f"Data: {received_data}", 10, 105, st7789.WHITE)
-                print(f"Sent confirmation byte: {CONFIRM_BYTE}")
-                break
-    
-    irda_sd.off()  # Shutdown ZHX1010 to save power
-    
+    received_data = receive_data()  # Call receive_data with no arguments
+    if received_data:  # If data is received
+        print(f"Received IR data: {received_data}")
+        display.text(font, f"Data: {received_data}", 10, 105, st7789.WHITE)
+    irda_sd.on()  # Shutdown ZHX1010 after sending
     stored_ir_signal = received_data  # Store the received data
     time.sleep(2)
     display.text(font, "IR Signal Stored", 10, 105, st7789.WHITE)
@@ -154,18 +219,17 @@ def check_checksum(checksum):
         print(f"Invalid")
         return False
 
-
-def send_ir_signal(message):
+def send_ir_signal(message=None):
     global stored_ir_signal
-    set_irda_for_transmit()  # Configure for transmission
+    irda_sd.off()  # Pull the shutdown pin low to enable the sensor
     display.text(font, "IR Signal Sending", 10, 140, st7789.WHITE)
     
     if stored_ir_signal:
-        uart.write(stored_ir_signal)  # Send the stored data
+        send_data(stored_ir_signal)  # Send the stored data
         print(f"Sent IR data: {stored_ir_signal}")
-    elif message:
+    elif message is not None:
         checksum_z = calculate_checksum(message)
-        uart.write(checksum_z.to_bytes(1, 'big'))
+        send_data(checksum_z.to_bytes(1, 'big'))
         print(f"Sent IR data: {checksum_z}")
 
     else:
@@ -175,16 +239,17 @@ def send_ir_signal(message):
     time.sleep(2)
 
 def ir_bruteforce():
-    for i in range(0,13):
-        display.text(font, "Sending: "+str(i), 10, 205,st7789.RED)
+    for i in bruteforce_list:
+        display.text(font, "Sending: "+str(i), 10, 205, st7789.RED)
         send_ir_signal(i)
-        confirm_message=uart.read(1)
-#         while not confirm_message or confirm_message[0] != CONFIRM_BYTE:
-#             send_ir_signal(i)
-#             confirm_message=uart.read(1)
-        
+        confirm_message = receive_data(1)
+        # Uncomment the following lines if you need to resend until confirmation is received
+        # while not confirm_message or confirm_message[0] != CONFIRM_BYTE:
+        #     send_ir_signal(i)
+        #     confirm_message = receive_data(1)
 
 def display_menu(selection):
+
     if selection == 0:
         display.text(font, "-> Read & Store IR Signal", 10, 105)
         display.text(font, "   Send Stored IR Signal", 10, 140)
@@ -205,8 +270,6 @@ def display_menu(selection):
         display.text(font, "   Send Stored IR Signal", 10, 140)
         display.text(font, "   Rainbow LED Cycle", 10, 175)
         display.text(font, "-> IR Bruteforce", 10, 205)        
-        
-    
 
 def main():
     for i in range(num_pixels):
@@ -223,12 +286,12 @@ def main():
     
     while True:
         if not btn_up.value():  # Button pressed
-            menu_selection = (menu_selection - 1) % 4  # Update to cycle through 3 options
+            menu_selection = (menu_selection - 1) % 4  # Update to cycle through 4 options
             display_menu(menu_selection)
             time.sleep(0.2)  # Debounce delay
 
         if not btn_down.value():  # Button pressed
-            menu_selection = (menu_selection + 1) % 4  # Update to cycle through 3 options
+            menu_selection = (menu_selection + 1) % 4  # Update to cycle through 4 options
             display_menu(menu_selection)
             time.sleep(0.2)  # Debounce delay
 
