@@ -1,67 +1,30 @@
-from machine import Pin, UART
-import time
+from rp2 import PIO, StateMachine, asm_pio
+from machine import Pin
 
-# Configuration
-baud_rate = 9600
-bit_time = 1 / baud_rate
-pulse_duration = bit_time * 3 / 16
+# Setup IR_SD pin
+ir_sd_pin = Pin(17, Pin.OUT)
+ir_sd_pin.value(0)  # Set to 0 to enable the transceiver
 
-# Pin Definitions
-IR_RX_PIN = 27  # Pin connected to RXD of ZHX1010
-IRDA_SD_PIN = 7  # Pin connected to SD of ZHX1010 (Shutdown Control)
+@asm_pio(set_init=PIO.IN_HIGH)
+def irda_rx():
+    # Wait for the start bit (logic low)
+    wait(0, pin, 0)
+    # Delay to reach the middle of the first data bit
+    set(x, 7) [7]
+    label("bitloop")
+    in_(pins, 1)    # Shift in the next data bit
+    jmp(x_dec, "bitloop")  # Loop 8 times for 8 bits
 
-# Setup UART (for RXD)
-uart = UART(1, baudrate=baud_rate, bits=8, parity=None, stop=1, rx=Pin(IR_RX_PIN))
+# Setup the state machine on GPIO pin connected to RXD
+sm = StateMachine(0, irda_rx, freq=9600 * 8, in_base=Pin(16))
 
-# Setup IRDA shutdown control pin
-irda_sd = Pin(IRDA_SD_PIN, Pin.OUT)
+sm.active(1)
 
-# Ensure the IRDA transceiver is enabled (set SD pin low)
-irda_sd.off()
-
-# IR Receiver Pin (for receiving bits)
-ir_receiver = Pin(IR_RX_PIN, Pin.IN)
-
-def receive_bit():
-    # Wait for start bit
-    while ir_receiver.value() == 1:
-        pass
-    time.sleep(bit_time / 2)  # Wait until the middle of the bit time
-
-    # Read bit value
-    pulse = ir_receiver.value()
-    if pulse == 1:
-        time.sleep(pulse_duration)
-        return 1
-    else:
-        time.sleep(bit_time - pulse_duration)
-        return 0
-
-def receive_byte():
-    byte = 0
-    # Wait for start bit (0)
-    while receive_bit() != 0:
-        pass
-    # Read 8 bits of data (LSB first)
-    for i in range(8):
-        bit = receive_bit()
-        byte |= (bit << i)
-    # Wait for stop bit (1)
-    while receive_bit() != 1:
-        pass
-    return byte
-
-def continuous_receive():
-    print("Starting continuous reception...")
-    while True:
-        received_byte = receive_byte()
-        print(f"Received byte: {received_byte:02X}")  # Print received byte in hex format
-
-# Ensure the IRDA transceiver is enabled
-irda_sd.off()
-
-# Start continuous reception
-continuous_receive()
-
-# Optionally disable the IRDA transceiver (put it in shutdown mode)
-# irda_sd.on()  # Uncomment this line if you want to manually stop the reception and disable the IR transceiver
+while True:
+    if sm.rx_fifo():
+        data = sm.get() & 0xff  # Get one byte of data
+        print(chr(data))  # Print the received character
+        
+    # Optionally, toggle the IR_SD pin based on some condition
+    # For example, disable the transceiver after a period of inactivity
+    # ir_sd_pin.value(1)  # Set to 1 to disable the transceiver
