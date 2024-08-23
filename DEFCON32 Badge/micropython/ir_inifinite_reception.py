@@ -1,32 +1,103 @@
-from rp2 import PIO, StateMachine, asm_pio
 from machine import Pin
+import time
+from irda_sir import IrdaSIR, UartCfg
 
-# Setup IR_SD pin (for enabling/disabling the transceiver)
-ir_sd_pin = Pin(17, Pin.OUT)
-ir_sd_pin.value(0)  # Set to 0 to enable the transceiver
+# Global variables
+mIrRxBuf = []
+mIrRxWritePos = 0
+mIrRxBytesUsed = 0
+mIrRxHadOverrun = False
+mEEpos = 0
 
-# IR_RX is connected to GPIO 16
-ir_rx_pin = 16
+# Predefined match sequence
+match = [0xFC, 0xFF, 0xFD, 0x44, 0x47]
 
-@asm_pio(set_init=PIO.IN_HIGH)
-def irda_rx():
-    # Wait for the start bit (logic low)
-    wait(0, pin, 0)
-    # Delay to reach the middle of the first data bit
-    set(x, 7) [7]
-    label("bitloop")
-    in_(pins, 1)    # Shift in the next data bit
-    jmp(x_dec, "bitloop")  # Loop 8 times for 8 bits
+# Reception handler (equivalent to myIrdaSIRuartRxF)
+def myIrdaSIRuartRxF(rawBuf):
+    global mIrRxBuf, mIrRxWritePos, mIrRxBytesUsed, mIrRxHadOverrun, mEEpos
 
-# Setup the state machine on GPIO pin connected to IR_RX
-sm = StateMachine(0, irda_rx, freq=9600 * 8, in_base=Pin(ir_rx_pin))
+    for val in rawBuf:
+        # Buffer the received data
+        if mIrRxBytesUsed == len(mIrRxBuf):
+            mIrRxHadOverrun = True
+            break
 
-sm.active(1)
+        if mIrRxWritePos >= len(mIrRxBuf):
+            mIrRxWritePos = 0
 
-while True:
-    if sm.rx_fifo():
-        data = sm.get() & 0xff  # Get one byte of data
-        print(chr(data))  # Print the received character
+        mIrRxBuf.append(val)
+        mIrRxWritePos += 1
+        mIrRxBytesUsed += 1
+
+    if mEEpos < 0:
+        return
+
+    for val in rawBuf:
+        if val >> 8:  # Error causes a reset
+            mEEpos = 0
+            continue
+
+        if val != match[mEEpos] and val != match[mEEpos]:
+            mEEpos = 0
+            continue
+
+        if mEEpos != len(match) - 1:  # Match advances
+            mEEpos += 1
+        else:
+            mEEpos = -1
+            break
+
+# Initialize IrDA in RX mode
+def irdaInitRx():
+    cfg = UartCfg(
+        baudrate=9600,
+        char_bits=8,
+        stop_bits=1,
+        par_ena=False,
+        par_even=False,
+        rx_en=True,
+        tx_en=False
+    )
+    
+    print("Initializing IrDA in RX mode...")
+    irda = IrdaSIR(cfg, tx_pin=26, rx_pin=27, sd_pin=7)
+    
+    # Clear the SD pin to enable IR
+    irda.sd_pin.off()
+
+    return irda
+
+# Function to receive data, analogous to emit_data
+def receive_data(irda):
+    received_data = []
+    
+    # Receive until no more data is available
+    while True:
+        data = irda.receive_data()
+        if data is None:
+            break
+        received_data.append(data)
+        print(f"Received data: {data}")
+    
+    # Process the received data with the custom handler
+    if received_data:
+        myIrdaSIRuartRxF(received_data)
+
+# Main execution
+if __name__ == "__main__":
+    # Initialize the reception buffer
+    mIrRxBuf = []
+
+    # Initialize IrDA in receive mode
+    irda = irdaInitRx()
+
+    # Continuously receive data
+    while True:
+        receive_data(irda)
         
-    # Optionally, you can disable the transceiver using IR_SD pin
-    # ir_sd_pin.value(1)  # Set to 1 to disable the transceiver
+        # Check for buffer overrun
+        if mIrRxHadOverrun:
+            print("Buffer overrun occurred!")
+            mIrRxHadOverrun = False  # Reset overrun flag
+        
+        time.sleep(1)  # Small delay to prevent overwhelming the loop

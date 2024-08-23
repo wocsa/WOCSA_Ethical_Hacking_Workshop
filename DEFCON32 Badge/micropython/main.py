@@ -4,6 +4,8 @@ import neopixel
 import time
 from random import randint
 import vga2_16x16 as font
+from irda_sir import IrDASIR
+#from irda_simple import SimpleIrDA
 
 # Pin definitions based on the schematic and ZHX1010 datasheet
 IR_RX_PIN = 27  # Pin connected to RXD of ZHX1010
@@ -17,6 +19,16 @@ BUTTON_START_PIN = 22  # Pin for SW_START
 BUTTON_SELECT_PIN = 23  # Pin for SW_SELECT
 BUTTON_A_PIN = 21  # Pin for SW_A
 BUTTON_B_PIN = 20  # Pin for SW_B
+
+# Initialize buttons
+btn_up = Pin(BUTTON_UP_PIN, Pin.IN, Pin.PULL_UP)
+btn_down = Pin(BUTTON_DOWN_PIN, Pin.IN, Pin.PULL_UP)
+btn_select = Pin(BUTTON_SELECT_PIN, Pin.IN, Pin.PULL_UP)
+btn_a = Pin(BUTTON_A_PIN, Pin.IN, Pin.PULL_UP)
+btn_b = Pin(BUTTON_B_PIN, Pin.IN, Pin.PULL_UP)
+
+#Initialize IRDA switch
+irda_switch = Pin(IRDA_SD_PIN,Pin.OUT)
 
 # SPI pins for the display (based on common DEFCON badge setups)
 SPI_SCK_PIN = 8
@@ -66,13 +78,6 @@ def config(rotation=0, buffer_size=0, options=0):
 
 display = config(1, buffer_size=4096)  # rotation 3 for normal orientation, 1 for upside down
 
-# Initialize buttons
-btn_up = Pin(BUTTON_UP_PIN, Pin.IN, Pin.PULL_UP)
-btn_down = Pin(BUTTON_DOWN_PIN, Pin.IN, Pin.PULL_UP)
-btn_select = Pin(BUTTON_SELECT_PIN, Pin.IN, Pin.PULL_UP)
-btn_a = Pin(BUTTON_A_PIN, Pin.IN, Pin.PULL_UP)
-btn_b = Pin(BUTTON_B_PIN, Pin.IN, Pin.PULL_UP)
-
 num_pixels = 9
 np = neopixel.NeoPixel(Pin(4), num_pixels)
 
@@ -104,219 +109,16 @@ def rainbow_cycle(wait):
         np.write()
         time.sleep(0.01)
 
-# Initialize the shutdown pin as output
-irda_sd = Pin(IRDA_SD_PIN, Pin.OUT)
-ir_led = Pin(IR_TX_PIN, Pin.OUT)  # IR LED for transmission
-ir_receiver = Pin(IR_RX_PIN, Pin.IN)  # IR receiver for receiving
 
-def enable_irda():
-    irda_sd.off()  # Enable the IR transceiver by setting SD low
-
-def disable_irda():
-    irda_sd.on()  # Disable the IR transceiver by setting SD high
-
-def send_bit(bit):
-    if bit == 1:
-        ir_led.on()
-        time.sleep(pulse_duration)  # 3/16 of the bit time
-        ir_led.off()
-        time.sleep(bit_time - pulse_duration)
-    else:
-        ir_led.off()
-        time.sleep(bit_time)
-
-def send_byte(byte):
-    global tx_busy
-    tx_busy = True
-    # Start bit (always 0)
-    send_bit(0)
-    # Data bits (LSB first)
-    for i in range(8):
-        send_bit((byte >> i) & 1)
-    # Stop bit (always 1)
-    send_bit(1)
-    tx_busy = False
-
-def send_data(data):
-    global send_buffer
-    if tx_busy:
-        # If TX is busy, add data to buffer
-        send_buffer.extend(data)
-    else:
-        # Send data immediately if TX is not busy
-        for byte in data:
-            send_byte(byte)
-        
-        # Check buffer after sending
-        while send_buffer:
-            next_byte = send_buffer.pop(0)
-            send_byte(next_byte)
-
-def receive_bit():
-    while ir_receiver.value() == 1:
-        pass  # Wait for start bit (0)
-    time.sleep(bit_time / 2)  # Wait until the middle of the bit time
-
-    pulse = ir_receiver.value()
-    if pulse == 1:
-        time.sleep(pulse_duration)
-        return 1
-    else:
-        time.sleep(bit_time - pulse_duration)
-        return 0
-
-def receive_byte():
-    byte = 0
-    # Wait for start bit (0)
-    while receive_bit() != 0:
-        pass
-    # Read 8 bits of data (LSB first)
-    for i in range(8):
-        bit = receive_bit()
-        byte |= (bit << i)
-    # Wait for stop bit (1)
-    while receive_bit() != 1:
-        pass
-    return byte
-
-def receive_data():
-    received = []
-    timeout = 2.0  # Increased timeout to ensure no data is missed
-    last_received_time = time.ticks_ms()  # Record the time when the last byte was received
-    minimal_delay = 0.05  # Slightly longer delay to ensure proper timing
-
-#     # Wait for confirmation byte first
-#     received_confirm = receive_byte()
-#     if received_confirm != CONFIRM_BYTE:
-#         print("Error: Confirmation byte not received or incorrect.")
-#         return None
-    
-    # Continuously receive data until no more data is detected
-    while True:
-        if time.ticks_diff(time.ticks_ms(), last_received_time) > timeout * 1000:
-            print("Timeout!")
-            break  # Exit the loop if no data has been received for the timeout period
-        
-        if ir_receiver.value() == 0:  # Check if there is data to read
-            rb = receive_byte()
-            received.append(rb)
-            last_received_time = time.ticks_ms()  # Update the time when data was last received
-            print(f"Received Data: {rb}")
-        
-        time.sleep(minimal_delay)  # Add a small delay to slow down the read process
-    
-    return bytes(received)
-
-def check_tx_status():
-    return tx_busy
-
-def read_ir_signal():
-    global stored_ir_signal
-    enable_irda()  # Enable ZHX1010
-    display.text(font, "Reading IR Signal...", 10, 105, st7789.WHITE)
-    print("Reading IR Signal...")
-    
-    received_data = receive_data()  # Call receive_data with no arguments
-    if received_data:  # If data is received
-        print(f"Received IR data: {received_data}")
-        display.text(font, f"Data: {received_data}", 10, 105, st7789.WHITE)
-    
-    disable_irda()  # Disable ZHX1010 to save power
-    
-    stored_ir_signal = received_data  # Store the received data
-    time.sleep(2)
-    display.text(font, "IR Signal Stored", 10, 105, st7789.WHITE)
-    time.sleep(2)
-
-def send_ir_signal(message=None):
-    global stored_ir_signal
-    enable_irda()  # Enable ZHX1010
-    display.text(font, "IR Signal Sending", 10, 140, st7789.WHITE)
-    
-    if message is not None:
-        send_data(message.to_bytes(1, 'big'))
-        print(f"Sent IR data: {message}")
-    elif stored_ir_signal:
-        send_data(stored_ir_signal)  # Send the stored data
-        print(f"Sent IR data: {stored_ir_signal}")
-    else:
-        display.text(font, "No IR signal stored.", 10, 140, st7789.RED)
-    
-    # Wait until TX is complete before shutting down
-    while check_tx_status():
-        time.sleep(0.1)
-
-    disable_irda()  # Disable ZHX1010 to save power
-    time.sleep(2)
-
-# IrDA SIR NRZI Encoding Functions
-def nrzi_encode_byte(byte, last_state=1):
-    """
-    Encode a byte using NRZI encoding.
-    
-    :param byte: The byte to encode.
-    :param last_state: The last signal state (1 or 0). Default is 1 (high).
-    :return: A list of encoded bits representing the NRZI-encoded byte.
-    """
-    encoded_bits = []
-    
-    for i in range(8):
-        bit = (byte >> i) & 1  # Extract the current bit (LSB first)
-        
-        if bit == 0:
-            # Transition for a 0
-            last_state = 1 if last_state == 0 else 0
-        
-        # For a 1, no transition (keep the same state)
-        encoded_bits.append(last_state)
-    
-    return encoded_bits
-
-def nrzi_encode_data(data):
-    """
-    Encode a sequence of bytes using NRZI encoding.
-    
-    :param data: The sequence of bytes to encode.
-    :return: A list of encoded bits representing the NRZI-encoded data.
-    """
-    last_state = 1  # Assume we start with a high signal
-    encoded_stream = []
-    
-    for byte in data:
-        encoded_byte = nrzi_encode_byte(byte, last_state)
-        encoded_stream.extend(encoded_byte)
-        last_state = encoded_byte[-1]  # Update the last state
-    
-    return encoded_stream
-
-def send_nrzi_encoded_byte(byte, last_state=1):
-    encoded_bits = nrzi_encode_byte(byte, last_state)
-    for bit in encoded_bits:
-        send_bit(bit)
-    return encoded_bits[-1]  # Return the last state to maintain continuity
-
-def send_nrzi_encoded_data(data):
-    global send_buffer
-    if tx_busy:
-        # If TX is busy, add data to buffer
-        send_buffer.extend(data)
-    else:
-        last_state = 1  # Start with a high signal (1)
-        # Send data immediately if TX is not busy
-        for byte in data:
-            last_state = send_nrzi_encoded_byte(byte, last_state)
-        
-        # Check buffer after sending
-        while send_buffer:
-            next_byte = send_buffer.pop(0)
-            last_state = send_nrzi_encoded_byte(next_byte, last_state)
 
 def calculate_checksum(item_number):
     """Calculate checksum as per Slow IrDA compliance."""
     return ((item_number - 15) * 16 + item_number) & 0xFF
 
 def ir_bruteforce():
-    enable_irda()  # Enable ZHX1010
+    # Initialize the IrDA SIR object
+    irda = IrDASIR(tx_pin=IR_TX_PIN, rx_pin=IR_TX_PIN)
+    irda_switch.off() #disable to switch on IRDA
     # Infinite loop to send random uint8 numbers between 1 and 13
     while btn_b.value():
         # Generate a random uint8 number between 1 and 13
@@ -330,11 +132,11 @@ def ir_bruteforce():
         display.text(font, f"Sending n:{random_number} c:{checksum}", 10, 205, st7789.RED) 
         
         # Send the random number checksum
-        send_data([checksum])
+        irda.send(str(checksum))
         
         # Wait for a short period before sending the next number
         time.sleep(1)  # Adjust the delay as needed between sending messages
-    disable_irda()  # Disable ZHX1010 to save power
+   
 
 
 def display_menu(selection):
@@ -361,6 +163,16 @@ def display_menu(selection):
         display.text(font, "-> IR Bruteforce  ", 10, 205)        
 
 def main():
+    irda_switch.off() #enable IrDA
+    # Initialize the IrDA SIR object
+    irda = IrDASIR(tx_pin=IR_TX_PIN, rx_pin=IR_RX_PIN)
+    # Initialize the SimpleIrDA object
+    #irda = SimpleIrDA(tx_pin=IR_TX_PIN, rx_pin=IR_RX_PIN)
+    
+    
+    # Store IR received data
+    global all_data
+    
     for i in range(num_pixels):
         np[i] = COLORS[randint(0, 5)]
     np.write()
@@ -386,9 +198,23 @@ def main():
 
         if not btn_a.value():  # Button pressed
             if menu_selection == 0:
-                read_ir_signal()
+                display.text(font, "-> Waiting IR Data...", 10, 105, st7789.BLUE)
+                all_data=irda.receive(timeout=5000)
+                if all_data:
+                    display.text(font, "-> Received Data", 10, 105, st7789.GREEN)
+                else:
+                    display.text(font, "-> No Data Received", 10, 105, st7789.RED)
+                print(all_data.decode('ascii'))
+                irda_switch.on() #enable to switch on IRDA
             elif menu_selection == 1:
-                send_ir_signal()
+                if all_data:
+                    irda_switch.off() #disable to switch on IRDA
+                    display.text(font, f"-> Sending stored data", 10, 140,st7789.BLUE)
+                    irda.send(all_data)
+                    display.text(font, "-> IR Data Sent", 10, 140,st7789.GREEN)
+                    irda_switch.on() #enable to switch on IRDA
+                else:
+                    display.text(font, "-> No Data Stored", 10, 140,st7789.RED)
             elif menu_selection == 2:
                 rainbow_cycle(0.2)  # Activate Rainbow LED Cycle
             elif menu_selection == 3:
