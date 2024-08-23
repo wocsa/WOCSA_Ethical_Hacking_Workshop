@@ -1,103 +1,94 @@
 from machine import Pin
 import time
-from irda_sir import IrdaSIR, UartCfg
 
-# Global variables
-mIrRxBuf = []
-mIrRxWritePos = 0
-mIrRxBytesUsed = 0
-mIrRxHadOverrun = False
-mEEpos = 0
 
-# Predefined match sequence
-match = [0xFC, 0xFF, 0xFD, 0x44, 0x47]
+# Configuration
+baud_rate = 9600
+bit_time = 1 / baud_rate
+pulse_duration = bit_time * 3 / 16
+# Pin Definitions
+IR_RX_PIN = 27  # Pin connected to RXD of ZHX1010
+IRDA_SD_PIN = 7  # Pin connected to SD of ZHX1010 (Shutdown Control)
 
-# Reception handler (equivalent to myIrdaSIRuartRxF)
-def myIrdaSIRuartRxF(rawBuf):
-    global mIrRxBuf, mIrRxWritePos, mIrRxBytesUsed, mIrRxHadOverrun, mEEpos
+# Setup IRDA shutdown control pin
+irda_sd = Pin(IRDA_SD_PIN, Pin.OUT)
 
-    for val in rawBuf:
-        # Buffer the received data
-        if mIrRxBytesUsed == len(mIrRxBuf):
-            mIrRxHadOverrun = True
-            break
+# Ensure the IRDA transceiver is enabled (set SD pin low)
+irda_sd.off()
 
-        if mIrRxWritePos >= len(mIrRxBuf):
-            mIrRxWritePos = 0
+# IR Receiver Pin (for receiving bits)
+ir_receiver = Pin(IR_RX_PIN, Pin.IN)
 
-        mIrRxBuf.append(val)
-        mIrRxWritePos += 1
-        mIrRxBytesUsed += 1
+def receive_bit(timeout=0.1):
+    start_time = time.time()
+    # Wait for start bit
+    while ir_receiver.value() == 1:
+        if time.time() - start_time > timeout:
+            return None  # Return None if timeout occurs while waiting for a bit
+    time.sleep(bit_time / 2)  # Wait until the middle of the bit time
 
-    if mEEpos < 0:
-        return
+    # Read bit value
+    pulse = ir_receiver.value()
+    if pulse == 1:
+        time.sleep(pulse_duration)
+        return 1
+    else:
+        time.sleep(bit_time - pulse_duration)
+        return 0
 
-    for val in rawBuf:
-        if val >> 8:  # Error causes a reset
-            mEEpos = 0
-            continue
+def receive_byte():
+    byte = 0
+    # Wait for start bit (0)
+    start_bit = receive_bit()
+    if start_bit is None:
+        return None
+    if start_bit != 0:
+        return None
+    # Read 8 bits of data (LSB first)
+    for i in range(8):
+        bit = receive_bit()
+        if bit is None:
+            return None
+        byte |= (bit << i)
+    # Wait for stop bit (1)
+    stop_bit = receive_bit()
+    if stop_bit is None or stop_bit != 1:
+        return None
+    return byte
 
-        if val != match[mEEpos] and val != match[mEEpos]:
-            mEEpos = 0
-            continue
+def receive_data(timeout=5):
+    received = []
+    last_received_time = time.time()
 
-        if mEEpos != len(match) - 1:  # Match advances
-            mEEpos += 1
+    while True:
+        byte = receive_byte()
+        if byte is None:
+            # Check if timeout has been reached
+            if time.time() - last_received_time > timeout:
+                print("Timeout reached, stopping reception.")
+                break
         else:
-            mEEpos = -1
-            break
+            received.append(byte)
+            last_received_time = time.time()
+            print(f"Received byte: {byte:02X}")  # Print the byte in hexadecimal format
 
-# Initialize IrDA in RX mode
-def irdaInitRx():
-    cfg = UartCfg(
-        baudrate=9600,
-        char_bits=8,
-        stop_bits=1,
-        par_ena=False,
-        par_even=False,
-        rx_en=True,
-        tx_en=False
-    )
-    
-    print("Initializing IrDA in RX mode...")
-    irda = IrdaSIR(cfg, tx_pin=26, rx_pin=27, sd_pin=7)
-    
-    # Clear the SD pin to enable IR
-    irda.sd_pin.off()
+    return bytes(received)
 
-    return irda
+# Example usage
 
-# Function to receive data, analogous to emit_data
-def receive_data(irda):
-    received_data = []
-    
-    # Receive until no more data is available
-    while True:
-        data = irda.receive_data()
-        if data is None:
-            break
-        received_data.append(data)
-        print(f"Received data: {data}")
-    
-    # Process the received data with the custom handler
-    if received_data:
-        myIrdaSIRuartRxF(received_data)
+# Ensure the IRDA transceiver is enabled
+irda_sd.off()
 
-# Main execution
-if __name__ == "__main__":
-    # Initialize the reception buffer
-    mIrRxBuf = []
+# Simulate some delay (time for the message to be sent and received)
+time.sleep(2)
 
-    # Initialize IrDA in receive mode
-    irda = irdaInitRx()
+# Receive Message
+print("Waiting to receive message...")
+received_message = receive_data()
+if received_message:
+    print("Complete message received:", received_message)
+else:
+    print("Failed to receive the correct confirmation byte.")
 
-    # Continuously receive data
-    while True:
-        receive_data(irda)
-        
-        # Check for buffer overrun
-        if mIrRxHadOverrun:
-            print("Buffer overrun occurred!")
-            mIrRxHadOverrun = False  # Reset overrun flag
-        
-        time.sleep(1)  # Small delay to prevent overwhelming the loop
+# Optionally disable the IRDA transceiver (put it in shutdown mode)
+irda_sd.on()
