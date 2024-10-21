@@ -27,9 +27,15 @@ Ethical hacking is conducted with the explicit permission of the system owner to
   - [Benefits of IP Cameras](#benefits-of-ip-cameras)
 - [Workshop](#workshop)
   - [IP Cameras over HTTP](#ip-cameras-over-http)
-  - [Scan the Network](#scan-the-network)
-  - [Connect to the IP Camera](#connect-to-the-ip-camera)
-  - [Capture Unencrypted Information Using Wireshark](#capture-unencrypted-information-using-wireshark)
+    - [Scan the Network](#scan-the-network)
+    - [Connect to the IP Camera via HTTP](#connect-to-the-ip-camera-via-http)
+    - [Capture Unencrypted Information Using Wireshark](#capture-unencrypted-information-using-wireshark)
+  - [IP Cameras over RTSP](#ip-cameras-over-rtsp)
+    - [Scan the Network](#scan-the-network-1)
+    - [Connect to the IP Camera via RTSP](#connect-to-the-ip-camera-via-rtsp)
+      - [Step 1: Gather Required Information](#step-1-gather-required-information)
+      - [Step 2: Connect to the Camera using VLC](#step-2-connect-to-the-camera-using-vlc)
+      - [Step 3: Enjoy the Live Stream!](#step-3-enjoy-the-live-stream)
 
 # Introduction to IP Cameras
 
@@ -107,7 +113,7 @@ In some cases, compromised IP cameras can be recruited into a botnet. This is wh
 ## IP Cameras over HTTP
 IP cameras over HTTP transmit video streams and data using the Hypertext Transfer Protocol, allowing users to access live footage and control settings via web browsers. While this makes remote monitoring convenient, transmitting video over HTTP without encryption (like HTTPS) can expose the feed to interception by attackers. Unsecured HTTP connections can lead to sensitive information being leaked or manipulated, making it crucial to enable HTTPS for encrypted communication and to apply authentication mechanisms to protect the IP camera from unauthorized access.
 
-## Scan the Network
+### Scan the Network
 
 To identify active devices on your network, use the `nmap` tool:
 
@@ -140,7 +146,7 @@ To identify active devices on your network, use the `nmap` tool:
         <img src="files/nmap_full_output.png"/>
     </p>
 
-## Connect to the IP Camera
+### Connect to the IP Camera via HTTP
 
 Once you've identified the IP address of the camera from the scan, follow these steps to connect:
 
@@ -167,7 +173,7 @@ Once you've identified the IP address of the camera from the scan, follow these 
         <img src="files/http_camera_admin.png"/>
     </p>
 
-## Capture Unencrypted Information Using Wireshark
+### Capture Unencrypted Information Using Wireshark
 
 To analyze the communication between your machine and the IP camera, you can use Wireshark to capture unencrypted traffic (such as HTTP).
 
@@ -208,3 +214,77 @@ To analyze the communication between your machine and the IP camera, you can use
     <p style="text-align:center;">
         <img src="files/wireshark_http_images_3.png"/>
     </p>
+
+## IP Cameras over RTSP
+IP cameras using the RTSP (Real-Time Streaming Protocol) allow for live video and audio streaming over IP networks. RTSP acts as a network control protocol that establishes and controls media sessions between endpoints, such as an IP camera and a viewing application or server. It facilitates the transmission of real-time data, often using underlying transport protocols like RTP (Real-time Transport Protocol), which ensures the efficient delivery of video streams. This technology is widely used for security surveillance, enabling users to remotely view live footage from their IP cameras via software or browsers, with the stream's URL typically protected by authentication mechanisms.
+
+### Scan the Network
+
+To identify active devices on your network, use the `nmap` tool:
+
+1. **Basic Scan**: 
+   Run the following command to scan the entire subnetwork (replace `<subnetwork>` with your own):
+   ```bash
+   nmap <subnetwork>
+   ```
+   Example for scanning a specific subnet:
+   ```bash
+   nmap 192.168.2.0/24
+   ```
+    <p style="text-align:center;">
+        <img src="files/nmap_basic.png"/>
+    </p>
+
+2. **Full Scan with OS and Service Detection**:
+   To gather detailed information about the devices, including operating systems and services, run a more advanced scan and save the results to a file:
+   ```bash
+   nmap -A 192.168.2.0/24 -oN nmap.txt
+   ```
+   - `-A`: Enables OS detection, version detection, script scanning, and traceroute.
+   - `-oN nmap.txt`: Saves the output in normal format to the `nmap.txt` file.
+    
+    <p style="text-align:center;">
+        <img src="files/nmap_full.png"/>
+    </p>
+
+    <p style="text-align:center;">
+        <img src="files/nmap_full_output.png"/>
+    </p>
+
+
+### Connect to the IP Camera via RTSP
+
+#### Step 1: Gather Required Information
+To connect to an IP camera, you'll need the following:
+- **IP address of the camera** (e.g., `192.168.2.103`)
+- **RTSP URL** (this URL will vary depending on the camera model and configuration)
+
+For many camera models, the RTSP URL format is available online. For example, you can search for the correct RTSP URL format using resources like [iSpyConnect's camera database](https://www.ispyconnect.com/camera/yoosee). 
+
+Here is a sample RTSP URL for a Yoosee camera:
+```
+rtsp://admin:admin@192.168.2.103:554/onvif1
+```
+
+In this example:
+- `admin:admin` are the default username and password.
+- `192.168.2.103` is the camera's IP address.
+- `554` is the default RTSP port.
+- `/onvif1` specifies the stream path.
+
+#### Step 2: Connect to the Camera using VLC
+Once you've obtained the RTSP URL:
+1. Open **VLC Media Player**.
+2. Go to **Media** > **Open Network Stream**.
+3. Enter the RTSP URL in the "Network URL" field.
+4. Click **Play** to start viewing the live stream.
+
+    <p style="text-align:center;">
+        <img src="files/rtsp_VLC_connection.png"/>
+    </p>
+    <p style="text-align:center;">
+        <img src="files/rtsp_VLC_view.png.png"/>
+    </p>
+
+#### Step 3: Enjoy the Live Stream!
+You should now be able to view the live video feed from your IP camera directly within VLC. If you encounter issues, verify the RTSP URL, the camera’s network settings, and any firewall or authentication requirements.
