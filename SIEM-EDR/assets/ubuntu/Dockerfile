@@ -9,10 +9,10 @@ RUN WAZUH_MANAGER="10.0.0.2" WAZUH_AGENT_GROUP="default" WAZUH_AGENT_NAME="ubunt
 RUN update-rc.d wazuh-agent defaults 95 10
 
 # Copy the start script into the container
-COPY start-wazuh.sh /usr/local/bin/start-wazuh.sh
+COPY start-wazuh.sh /root/start-wazuh.sh
 
 # Make the script executable
-RUN chmod +x /usr/local/bin/start-wazuh.sh
+RUN chmod +x /root/start-wazuh.sh
 
 # Command to run the start script
-CMD ["/usr/local/bin/start-wazuh.sh"]
+CMD ["/root/start-wazuh.sh"]
