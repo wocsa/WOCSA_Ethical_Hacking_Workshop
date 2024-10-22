@@ -106,6 +106,25 @@ services:
       wazuh_network:
         ipv4_address: 10.0.0.4
 
+  ubuntu:
+    build:
+      context: ../../assets/ubuntu
+      dockerfile: ../../assets/ubuntu/Dockerfile
+    hostname: ubuntu
+    networks:
+      wazuh_network:
+        ipv4_address: 10.0.0.5
+
+  kali:
+    image: kalilinux/kali-rolling
+    hostname: kali
+    tty: true
+    ports:
+      - "2222:22"
+    networks:
+      wazuh_network:
+        ipv4_address: 10.0.0.6
+
 volumes:
   wazuh_api_configuration:
   wazuh_etc:
