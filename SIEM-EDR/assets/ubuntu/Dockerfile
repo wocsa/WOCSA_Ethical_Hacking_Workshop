@@ -11,6 +11,8 @@ RUN update-rc.d wazuh-agent defaults 95 10
 # Install servers packets
 RUN apt install -y openssh-server sudo net-tools
 
+RUN echo 'ubuntu:purple1' | chpasswd
+
 RUN service ssh start
 
 # Copy the start script into the container
