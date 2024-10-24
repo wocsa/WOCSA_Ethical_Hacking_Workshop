@@ -8,6 +8,11 @@ RUN apt-get update
 RUN WAZUH_MANAGER="10.0.0.2" WAZUH_AGENT_GROUP="default" WAZUH_AGENT_NAME="ubuntu" apt-get install wazuh-agent -y
 RUN update-rc.d wazuh-agent defaults 95 10
 
+# Install servers packets
+RUN apt install -y openssh-server sudo
+
+RUN service ssh start
+
 # Copy the start script into the container
 COPY start-wazuh.sh /root/start-wazuh.sh
 

@@ -116,9 +116,9 @@ services:
         ipv4_address: 10.0.0.5
 
   kali:
-    image: kalilinux/kali-rolling
-    hostname: kali
-    tty: true
+    build:
+      context: ../../assets/kali
+      dockerfile: ../../assets/kali/Dockerfile
     ports:
       - "2222:22"
     networks:
