@@ -9,7 +9,7 @@ RUN WAZUH_MANAGER="10.0.0.2" WAZUH_AGENT_GROUP="default" WAZUH_AGENT_NAME="ubunt
 RUN update-rc.d wazuh-agent defaults 95 10
 
 # Install servers packets
-RUN apt install -y openssh-server sudo
+RUN apt install -y openssh-server sudo net-tools
 
 RUN service ssh start
 
