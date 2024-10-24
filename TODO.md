@@ -11,3 +11,6 @@
 - [ ] Wireless Network Security/Wi-Fi/Open_Wi-Fi.pptx
 - [ ] Wireless Network Security/Wi-Fi/WPA-WPA2.pptx
 # To modify
+
+add auth.log
+add rsyslog
