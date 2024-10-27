@@ -14,3 +14,4 @@
 
 add auth.log
 add rsyslog
+add snort
