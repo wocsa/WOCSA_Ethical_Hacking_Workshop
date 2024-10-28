@@ -18,6 +18,8 @@ RUN service ssh start
 # Copy the start script into the container
 COPY start-wazuh.sh /root/start-wazuh.sh
 
+COPY ossec.conf /var/ossec/etc/ossec.conf
+
 # Make the script executable
 RUN chmod +x /root/start-wazuh.sh
 
