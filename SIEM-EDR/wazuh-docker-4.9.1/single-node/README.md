@@ -21,6 +21,24 @@ $ docker-compose up
 $ docker-compose up -d
 ```
 
-The environment takes about 1 minute to get up (depending on your Docker host) for the first time since Wazuh Indexer must be started for the first time and the indexes and index patterns must be generated.
+The environment takes several minutes to get up (depending on your Docker host) for the first time since Wazuh Indexer must be started for the first time and the indexes and index patterns must be generated.
 
-/var/ossec/bin/manage_agents
+# Use active response
+yum update
+yum install nano
+nano /var/ossec/etc/ossec.conf
+
+```
+<active-response>
+    <command>firewall-drop</command>
+    <location>local</location>
+    <rules_id>5763</rules_id>
+    <timeout>180</timeout>
+</active-response>
+```
+
+/var/ossec/bin/wazuh-control restart
+
+
+# Trouble shooting
+Currently, when rebooting the docker infrastructure, the Ubuntu agent may not be recognized due to duplicate agent names. To remove the old agent, connect to the Wazuh manager and execute `/var/ossec/bin/manage_agents`.
