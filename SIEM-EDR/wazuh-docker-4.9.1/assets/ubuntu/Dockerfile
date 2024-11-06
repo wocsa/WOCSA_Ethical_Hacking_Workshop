@@ -16,12 +16,12 @@ RUN echo 'ubuntu:purple1' | chpasswd
 RUN service ssh start
 
 # Copy the start script into the container
-COPY start-wazuh.sh /root/start-wazuh.sh
+COPY start-ubuntu.sh /root/start-ubuntu.sh
 
 COPY ossec.conf /var/ossec/etc/ossec.conf
 
 # Make the script executable
-RUN chmod +x /root/start-wazuh.sh
+RUN chmod +x /root/start-ubuntu.sh
 
 # Command to run the start script
-CMD ["/root/start-wazuh.sh"]
+CMD ["/root/start-ubuntu.sh"]
