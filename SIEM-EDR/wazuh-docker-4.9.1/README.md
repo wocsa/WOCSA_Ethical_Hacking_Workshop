@@ -39,6 +39,9 @@ nano /var/ossec/etc/ossec.conf
 
 /var/ossec/bin/wazuh-control restart
 
+# Install sysmon with wazuh for windows
+
+[text](https://wazuh.com/blog/using-wazuh-to-monitor-sysmon-events/)
 
 # Trouble shooting
 Currently, when rebooting the docker infrastructure, the Ubuntu agent may not be recognized due to duplicate agent names. To remove the old agent, connect to the Wazuh manager and execute `/var/ossec/bin/manage_agents`.
