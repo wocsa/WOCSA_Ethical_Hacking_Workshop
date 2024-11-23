@@ -1,4 +1,5 @@
 # WOCSA Ethical Hacking Workshop
+![logo](WocsaEthicalHacking.jpg)
 
 ## Introduction
 ### Workshop Overview
