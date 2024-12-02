@@ -68,8 +68,9 @@ Les topics à utiliser pour publier des messages :
   - Donnée : `NoDelay;Power1 OFF` ou `{"POWER":"ON"}`
 
 Tentez de forger une nouvelle trame avec le modèle suivant :
-```bash
-mosquitto_pub -h 192.168.10.2 -u "USER" -P "PASSWORD" -t "TOPIC" -m "DATA"
+    ```bash
+    mosquitto_pub -h 192.168.10.2 -u "USER" -P "PASSWORD" -t "TOPIC" -m "DATA"
+    ```
 
 ### Arrivez-vous à :
 
