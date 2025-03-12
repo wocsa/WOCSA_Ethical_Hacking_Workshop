@@ -1,0 +1,6 @@
+[submodule "SIEM-EDR/wazuh-docker"]
+	path = SIEM-EDR/wazuh-docker
+	url = https://github.com/wazuh/wazuh-docker.git
+[submodule "SIEM-EDR/graylog/docker-compose"]
+	path = SIEM-EDR/graylog/docker-compose
+	url = https://github.com/Graylog2/docker-compose.git

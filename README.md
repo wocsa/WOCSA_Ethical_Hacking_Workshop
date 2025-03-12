@@ -1,6 +1,18 @@
 # WOCSA Ethical Hacking Workshop
 ![logo](WocsaEthicalHacking.jpg)
 
+## Table of Contents
+- [WOCSA Ethical Hacking Workshop](#wocsa-ethical-hacking-workshop)
+  - [Table of Contents](#table-of-contents)
+  - [Introduction](#introduction)
+    - [Workshop Overview](#workshop-overview)
+    - [Introduction to the WOCSA Association](#introduction-to-the-wocsa-association)
+  - [Content](#content)
+  - [Add Your Content](#add-your-content)
+  - [Manage sub modules](#manage-sub-modules)
+    - [Install sub modules](#install-sub-modules)
+    - [Update sub modules](#update-sub-modules)
+
 ## Introduction
 ### Workshop Overview
 The primary goal of these workshops is to democratize cybersecurity knowledge by making it accessible to everyone through hands-on practice. Regardless of your skill level, these workshops are open to all to raise awareness among a wide audience about this exciting field. Whether you are a beginner or an IT expert, these workshops will enable you to gain practical knowledge and essential skills to understand the risks and defenses related to information security.
@@ -31,3 +43,13 @@ The various areas of cybersecurity covered include:
 
 ## Add Your Content
 Indeed, WOCSA stands for Worldwide Open Cyber Security Association, which means our goal is to promote openness and the sharing of cybersecurity knowledge. If you would like to propose a workshop or share your ideas, we invite you to submit a merge request. We warmly welcome contributions from anyone who wishes to share their knowledge and expertise.
+
+## Manage sub modules
+### Install sub modules
+```bash
+git submodule update --init --recursive
+```
+### Update sub modules
+```bash
+git submodule update --recursive --remote
+```
