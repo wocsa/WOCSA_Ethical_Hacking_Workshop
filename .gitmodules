@@ -1,0 +1,3 @@
+[submodule "SIEM-EDR/wazuh-docker"]
+	path = SIEM-EDR/wazuh-docker
+	url = https://github.com/wazuh/wazuh-docker.git
