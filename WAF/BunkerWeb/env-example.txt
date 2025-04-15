@@ -1,0 +1,55 @@
+# PHP VERSION
+# -----------
+# Uncomment one of the PHP versions you want to use for DVWA
+#PHP_VERSION=5.6
+#PHP_VERSION=7.0
+#PHP_VERSION=7.1
+#PHP_VERSION=7.2
+#PHP_VERSION=7.3
+#PHP_VERSION=7.4
+#PHP_VERSION=8.0
+PHP_VERSION=8.1
+
+
+LISTEN_PORT=8000
+# Local Listen Port
+# -----------------
+LISTEN_PORT=8000
+
+
+# ReCAPTCHA settings
+# ------------------
+# Used for the 'Insecure CAPTCHA' module
+# You'll need to generate your own keys at: https://www.google.com/recaptcha/admin
+RECAPTCHA_PRIV_KEY=
+RECAPTCHA_PUB_KEY=
+
+
+# Difficulty settings
+# -------------------
+# Depending on the difficulty you want, set this to:
+# * low
+# * medium
+# * high
+# * impossible
+SECURITY_LEVEL=medium
+
+
+# Intrusion Detection settings
+# ----------------------------
+# Enable PHP Web Application Firewall / Intrusion detection system
+# This will make the challenges harder.
+# Set to '1' (without quotes) to enable it
+PHPIDS_ENABLED=0
+
+# Enabling this will show why the WAF blocked the request on the blocked request.
+# Set to '1' (without quotes) to view blocked request reasons on the webpage
+PHPIDS_VERBOSE=0
+
+
+# Difficulty settings
+# -------------------
+# By default PHP errors will not be visible on the page.
+# If this is too difficult, you can choose to enable the display of PHP errors.
+# Set the value to '1' (without quotes) and PHP errors will be displayed
+PHP_DISPLAY_ERRORS=0
