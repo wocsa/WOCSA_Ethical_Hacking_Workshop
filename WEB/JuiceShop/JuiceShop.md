@@ -1,7 +1,3 @@
-Sure, I can update the "Exploiting Vulnerabilities" section to include a reference to the Juice Shop write-up on GitHub. Here's the revised markdown:
-
----
-
 # Warning
 This workshop is for educational purposes only. Ethical hacking is conducted with the explicit permission of the system owner to improve security.
 
