@@ -13,7 +13,7 @@ send "/mcp load http://mcp-server:8085/sse metasploit\n"
 expect "CAI>"
 
 # Send the command to set the CAI server
-send "/mcp set http://mcp-server:8084/sse zap-proxy\n"
+send "/mcp load http://mcp-server:8086/sse nmap\n"
 
 # Wait for the CAI> prompt
 expect "CAI>"

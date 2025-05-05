@@ -11,4 +11,9 @@ done
 
 # Start gc-metasploit
 /opt/venv/bin/gc-metasploit --transport http --host 0.0.0.0 --port 8085 &
+
+# Start the Nmap MCP server
+/opt/venv/bin/python /opt/nmap_mcp_server.py --host 0.0.0.0 --port 8086 &
+
+# Keep the container running
 tail -f /dev/null
