@@ -1,0 +1,20 @@
+services:
+  cai:
+    build:
+      context: ./cai
+      dockerfile: Dockerfile
+    stdin_open: true
+    tty: true
+    networks:
+      - cai
+
+  mcp-server:
+    build:
+      context: ./mcp-server
+      dockerfile: Dockerfile
+    networks:
+      - cai
+
+networks:
+  cai:
+    driver: bridge
