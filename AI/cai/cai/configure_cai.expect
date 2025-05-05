@@ -7,16 +7,16 @@ spawn cai
 expect "CAI>"
 
 # Send the command
-send "/mcp load http://mcp-server:8085/sse ms\r"
+send "/mcp load http://mcp-server:8085/sse metasploit\n"
 
-# Wait for the success message
-expect "Successfully connected"
+# Wait for the CAI> prompt
+expect "CAI>"
 
-# Introduce a delay (e.g., 5 seconds)
-sleep 5
+# Send the command to set the CAI server
+send "/mcp set http://mcp-server:8084/sse zap-proxy\n"
 
-# Send Ctrl+C to interrupt the process
-send_user "\003"  # \003 is the ASCII code for Ctrl+C
+# Wait for the CAI> prompt
+expect "CAI>"
 
-# Optionally, wait for any cleanup or exit message
-expect eof
+# Interact with the user
+interact
