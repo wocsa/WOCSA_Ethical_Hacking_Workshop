@@ -7,6 +7,11 @@ services:
     tty: true
     networks:
       - cai
+    environment:
+      OPENAI_API_KEY: "sk-1234"
+      ANTHROPIC_API_KEY: ""
+      OLLAMA: ""
+      PROMPT_TOOLKIT_NO_CPR: "1"
 
   mcp-server:
     build:

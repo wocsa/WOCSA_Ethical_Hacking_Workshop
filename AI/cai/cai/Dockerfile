@@ -1,12 +1,6 @@
 # Use the official Kali Linux image as the base image
 FROM kalilinux/kali-rolling
 
-# Set environment variables
-ENV OPENAI_API_KEY="sk-1234" \
-    ANTHROPIC_API_KEY="" \
-    OLLAMA="" \
-    PROMPT_TOOLKIT_NO_CPR=1
-
 # Update and install dependencies
 RUN apt-get update && \
     apt-get install -y python3 python3-pip python3-venv expect && \
