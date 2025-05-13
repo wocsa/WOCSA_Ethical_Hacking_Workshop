@@ -3,6 +3,7 @@ FROM kalilinux/kali-rolling
 
 # Update and install dependencies
 RUN apt-get update && \
+    apt-get install -y kali-linux-large && \
     apt-get install -y python3 python3-pip python3-venv expect && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
