@@ -1,25 +1,39 @@
 services:
-  cai:
-    build:
-      context: ./cai
-      dockerfile: Dockerfile
-    stdin_open: true
+  kali-cai:
+    image: neptune1212/kali-cai
+    container_name: kali-cai
+    privileged: true
     tty: true
+    env_file: ".env"
     networks:
-      - cai
-    environment:
-      OPENAI_API_KEY: "sk-1234"
-      ANTHROPIC_API_KEY: ""
-      OLLAMA: ""
-      PROMPT_TOOLKIT_NO_CPR: "1"
+      cyberlab-net:
+        ipv4_address: 172.28.0.2
 
-  mcp-server:
-    build:
-      context: ./mcp-server
-      dockerfile: Dockerfile
+  metasploitable2:
+    image: tleemcjr/metasploitable2
+    container_name: metasploitable2
     networks:
-      - cai
+      cyberlab-net:
+        ipv4_address: 172.28.0.3
+    tty: true  
+
+  juiceshop:
+    image: bkimminich/juice-shop
+    container_name: juiceshop
+    networks:
+      cyberlab-net:
+        ipv4_address: 172.28.0.4
+
+  dvwa:
+    image: vulnerables/web-dvwa
+    container_name: dvwa
+    networks:
+      cyberlab-net:
+        ipv4_address: 172.28.0.5
 
 networks:
-  cai:
+  cyberlab-net:
     driver: bridge
+    ipam:
+      config:
+        - subnet: 172.28.0.0/16
