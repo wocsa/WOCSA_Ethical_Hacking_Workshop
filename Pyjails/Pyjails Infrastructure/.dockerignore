@@ -1,0 +1,5 @@
+DO_NOT_INCLUDE/
+*.pyc
+__pycache__/
+.instance/
+

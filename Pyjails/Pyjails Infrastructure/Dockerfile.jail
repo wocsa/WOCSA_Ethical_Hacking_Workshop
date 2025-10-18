@@ -1,0 +1,25 @@
+# Dockerfile.jail
+FROM python:3.11-slim
+
+# install nmap (provides ncat) and other small packages
+RUN apt-get update && apt-get install -y ncat
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        socat \
+        ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create app dir
+WORKDIR /app
+
+# Install python deps
+RUN pip install --no-cache-dir requests
+
+# Add entrypoint
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
+# Expose the ncat port (for internal mapping)
+EXPOSE 9999
+CMD ["/entrypoint.sh"]
+
