@@ -83,34 +83,19 @@ As we have seen in the last part, your communication through the socket is in pl
 
 If you want to learn more about Diffie-Hellman, here is a link : https://www.crypto101.io
 
-The Diffie-Hellman key exchange is a method for the client and the server to exchange a public key through the network and then communicate safely thanks of a symmetric cryptography algorithm (We will use AES here).
+The Diffie-Hellman key exchange is a method for the client and the server to exchange a public key through the network and then communicate safely thanks of a symmetric cryptography algorithm (We will use XOR here to avoid importing library that are not available in default python).
 
-The AES algorithm is alvailable in the aes.py file. But now, let's talk about what you are going to compute :
+But now, let's talk about what you are going to compute :
 
-### Description of the original protocol [1]
+### Description of the original protocol
 
-1. Alice and Bob agree on a prime number \(p\) and a generator \(g\) of the multiplicative group \((\mathbb{Z}/p\mathbb{Z})^\times\), with \(g < p\).  
-   *(They may choose \(p\) and \(g\) in advance or exchange them in the clear at the start of the session — doing so does not improve Eve’s chances.)*
-
-2. Alice picks a secret random integer \(a\) and sends Bob the value  
-   \[
-   A \equiv g^{a} \pmod{p}.
-   \]
-
-3. Similarly, Bob picks a secret random integer \(b\) and sends Alice the value  
-   \[
-   B \equiv g^{b} \pmod{p}.
-   \]
-
-4. Alice receives \(B\) and computes  
-   \[
-   B^{a} \equiv (g^{b})^{a} \equiv g^{ba} \pmod{p}.
-   \]
-
-5. Bob receives \(A\) and computes  
-   \[
-   A^{b} \equiv (g^{a})^{b} \equiv g^{ab} \pmod{p}.
-   \]
+1. Alice and Bob agree on a prime number `p` and a generator `g` of the multiplicative group `(Z/pZ)*` (with `g < p`).  
+   *(They may choose `p` and `g` in advance or exchange them in the clear at the start of the session — doing so does not improve Eve’s chances.)*
+2. Alice chooses a secret number `a` and sends `A = g^a mod p`.
+3. Bob chooses a secret number `b` and sends `B = g^b mod p`.
+4. Alice computes `K = B^a mod p = g^(ba) mod p`.
+5. Bob computes `K = A^b mod p = g^(ab) mod p`.
+6. Both share the same secret key: `K = g^(ab) mod p`.
 
 Because exponentiation in this group is commutative with respect to the exponents, both Alice and Bob obtain the same value \(g^{ab} \bmod p\), which can be used as a shared secret key.
 
@@ -123,3 +108,8 @@ Because exponentiation in this group is commutative with respect to the exponent
 The server will send you (A,p,g), so you will be able to compute K which is going to be the key to encrypt and decrypt the communication. But you will also have to send B that you can compute with (b,p,g). 
 
 Then the server should send the flag and you just need to decrypt it with the key K.
+
+**Note:** Because we are using the XOR algorithm you have to compute K mod 256, in a real context you should avoid to do that and use more complex algorithm such as AES.
+
+*HOST = local-network-ip*
+*PORT = 9003*
