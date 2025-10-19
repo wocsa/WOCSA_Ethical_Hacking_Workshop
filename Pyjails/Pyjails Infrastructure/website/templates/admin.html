@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Panel</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+    <h1>Welcome, {{ username }}</h1>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% for category, message in messages %}
+        <div class="flash {{ category }}">
+          {{ message }}
+        </div>
+      {% endfor %}
+    {% endwith %}
+
+    <h2>Add New User</h2>
+    <form method="POST">
+        <input type="hidden" name="form_type" value="add_user">
+        <label>Username:</label><br>
+        <input type="text" name="username" required><br>
+        <label>Password:</label><br>
+        <input type="password" name="password" required><br><br>
+        <button type="submit">Add User</button>
+    </form>
+
+    <h2>Add New Jail</h2>
+    <form method="POST">
+        <input type="hidden" name="form_type" value="add_jail">
+        <label>Jail Name:</label><br>
+        <input type="text" name="jail_name" required><br><br>
+        <button type="submit">Add Jail</button>
+    </form>
+
+    <hr>
+
+    <h2>Current Users</h2>
+    <ul>
+        {% for user in users %}
+            <li>
+                {{ user.username }}
+                <form method="POST" action="{{ url_for('delete_user', user_id=user.id) }}" style="display:inline;">
+                    <button type="submit" onclick="return confirm('Delete user {{ user.username }}?')">Delete</button>
+                </form>
+            </li>
+        {% endfor %}
+    </ul>
+
+    <hr>
+
+    <h2>Current Jails</h2>
+    <ul>
+        {% for jail in jails %}
+            <li>
+                <strong>{{ jail.name }}</strong><br>
+                <small>UUID: <code>{{ jail.id }}</code></small>
+                <form method="POST" action="{{ url_for('delete_jail', jail_id=jail.id) }}" style="display:inline;">
+                    <button type="submit" onclick="return confirm('Delete jail {{ jail.name }}?')">Delete</button>
+                </form>
+            </li>
+        {% endfor %}
+    </ul>
+
+    <br>
+    <a href="{{ url_for('logout') }}">Logout</a>
+</body>
+</html>
+

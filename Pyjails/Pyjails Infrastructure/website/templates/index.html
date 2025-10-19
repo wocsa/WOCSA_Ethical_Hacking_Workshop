@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Jails Check</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+    <h1>Progress: {{ validated_count }} / {{ total_jails }}</h1>
+    
+    <p>
+        <a href="{{ url_for('login') }}">
+            <button>Admin Login</button>
+        </a>
+    </p>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% for category, message in messages %}
+            <div class="flash {{ category }}">
+                {{ message }}
+            </div>
+        {% endfor %}
+    {% endwith %}
+
+    <hr>
+
+    {% for jail in jails %}
+        <div>
+            <h3>{{ jail.name }}</h3>
+            {% if jail.id|string in session.validated_jails %}
+                <p class="flash success">Validated ✅</p>
+            {% else %}
+                <form method="POST">
+                    <input type="hidden" name="jail_id" value="{{ jail.id }}">
+                    <label>Enter Code:</label><br>
+                    <input type="text" name="input_value" required>
+                    <button type="submit">Submit</button>
+                </form>
+            {% endif %}
+        </div>
+        <hr>
+    {% endfor %}
+</body>
+</html>
+

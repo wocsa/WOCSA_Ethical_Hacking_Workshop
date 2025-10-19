@@ -1,0 +1,37 @@
+import os
+import judge
+last_size = os.path.getsize(__file__)
+del os
+
+def auto_reload():
+    import os
+    global last_size
+    new_size = os.path.getsize(__file__)
+    if new_size != last_size:
+        last_size = new_size
+        with open(__file__, 'r') as f:
+            code = f.read()
+        print("File size changed, reloading...")
+        exec(code, globals())
+    del os
+
+def jail():
+    banned_words = ["exec", "eval", "builtins", "getattr", "globals", "locals", "import", "os", "__", "breakpoint", "subprocess"]
+    command = str(input(">>>"))
+    if any(bad in command for bad in banned_words):
+        print("Unauthorized command.")
+        return
+    try:
+        result=eval(command)
+        print(result)
+    except Exception as e:
+        print(f"Invalid command, {e}")
+
+while True:
+    if judge.if_who_am_i_detected():
+        import flagger
+        print(flagger.get_flag("jail 3"))
+        del flagger
+    jail()
+    auto_reload()
+    

@@ -1,0 +1,151 @@
+services:
+  website:
+    build:
+      context: ./website
+      dockerfile: Dockerfile
+    container_name: pyjails_website
+    volumes:
+      - type: bind
+        source: ./website
+        target: /app
+        read_only: true
+    ports:
+      - "0.0.0.0:8000:5000"  # Bind to all interfaces
+    networks:
+      jails_net:
+        ipv4_address: 172.18.0.10
+    environment:
+      - FLASK_APP=website.py
+      - FLASK_ENV=production
+
+  jail1:
+    build:
+      context: .
+      dockerfile: Dockerfile.jail
+    container_name: jail1
+    environment:
+      - JAIL_IP=172.18.0.2
+      - JAIL_FILE=jail1.py
+      - JAIL_PORT=9999
+    volumes:
+      - type: bind
+        source: ./jail 1/jail1.py
+        target: /app/jail1.py
+        read_only: true
+      - type: bind
+        source: ./jail 1/flagger.py
+        target: /app/flagger.py
+        read_only: true
+      - type: bind
+        source: ./jail 1/judge.py
+        target: /app/judge.py
+        read_only: true
+    ports:
+      - "0.0.0.0:9001:9999"  # Bind to all interfaces
+    networks:
+      jails_net:
+        ipv4_address: 172.18.0.2
+    depends_on:
+      - website
+        
+  jail2:
+    build:
+      context: .
+      dockerfile: Dockerfile.jail
+    container_name: jail2
+    environment:
+      - JAIL_IP=172.18.0.3
+      - JAIL_FILE=jail2.py
+      - JAIL_PORT=9999
+    volumes:
+      - type: bind
+        source: ./jail 2/jail2.py
+        target: /app/jail2.py
+        read_only: true
+      - type: bind
+        source: ./jail 2/flagger.py
+        target: /app/flagger.py
+        read_only: true
+      - type: bind
+        source: ./jail 2/judge.py
+        target: /app/judge.py
+        read_only: true
+    ports:
+      - "0.0.0.0:9002:9999"
+    networks:
+      jails_net:
+        ipv4_address: 172.18.0.3
+    depends_on:
+      - website
+        
+  jail4:
+    build:
+      context: .
+      dockerfile: Dockerfile.jail
+    container_name: jail4
+    environment:
+      - JAIL_IP=172.18.0.5
+      - JAIL_FILE=jail4.py
+      - JAIL_PORT=9999
+    volumes:
+      - type: bind
+        source: ./jail 4/jail4.py
+        target: /app/jail4.py
+        read_only: true
+      - type: bind
+        source: ./jail 4/flagger.py
+        target: /app/flagger.py
+        read_only: true
+      - type: bind
+        source: ./jail 4/jail2.py
+        target: /app/jail2_alt.py
+        read_only: true
+      - type: bind
+        source: ./jail 4/judge.py
+        target: /app/judge.py
+        read_only: true
+    ports:
+      - "0.0.0.0:9004:9999"
+    networks:
+      jails_net:
+        ipv4_address: 172.18.0.5
+    depends_on:
+      - website
+        
+  jail5:
+    build:
+      context: .
+      dockerfile: Dockerfile.jail
+    container_name: jail5
+    environment:
+      - JAIL_IP=172.18.0.6
+      - JAIL_FILE=jail5.py
+      - JAIL_PORT=9999
+    volumes:
+      - type: bind
+        source: ./jail 5/jail5.py
+        target: /app/jail5.py
+        read_only: true
+      - type: bind
+        source: ./jail 5/flagger.py
+        target: /app/flagger.py
+        read_only: true
+      - type: bind
+        source: ./jail 5/judge.py
+        target: /app/judge.py
+        read_only: true
+    ports:
+      - "0.0.0.0:9005:9999"
+    networks:
+      jails_net:
+        ipv4_address: 172.18.0.6
+    depends_on:
+      - website
+        
+networks:
+  jails_net:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.18.0.0/16
