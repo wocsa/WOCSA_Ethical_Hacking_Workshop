@@ -99,8 +99,6 @@ But now, let's talk about what you are going to compute :
 
 Because exponentiation in this group is commutative with respect to the exponents, both Alice and Bob obtain the same value \(g^{ab} \bmod p\), which can be used as a shared secret key.
 
----
-
 **Note:** An eavesdropper (Eve) who observes \(p\), \(g\), \(A\) and \(B\) but does not know \(a\) or \(b\) faces the discrete logarithm problem (recovering \(a\) from \(A=g^a\pmod p\) or \(b\) from \(B\)), which is believed to be computationally hard for appropriately chosen parameters.
 
 ### Challenge goal
@@ -113,3 +111,53 @@ Then the server should send the flag and you just need to decrypt it with the ke
 
 *HOST = local-network-ip*
 *PORT = 9003*
+
+## Last challenge : Am I safe now ?
+
+Check Wireshark — did you discover any other flags? Hopefully not. As mentioned earlier, recovering a or b is computationally infeasible for an attacker. Nevertheless, a private key can be leaked by mistake. To mitigate this risk, use **Ephemeral Diffie‑Hellman (DHE)**: the server generates a fresh ephemeral private key for each connection (or session). This provides perfect forward secrecy — even if an attacker compromises an old key, they cannot decrypt subsequent sessions.
+
+We're not going to implement DHE here, but it's interesting to know about. Now I ask you to take the role of an attacker and try to find a way to read the communication.
+
+### MITM attack on Diffie‑Hellman (DH) — explanation + diagrams
+
+#### Short summary
+In a classic **unauthenticated** Diffie‑Hellman exchange, an active adversary (Eve) can position herself between Alice and Bob, intercepting and replacing the public values. Instead of a single Alice↔Bob exchange, Eve performs **two** DH exchanges (Alice↔Eve and Eve↔Bob). Alice and Bob believe they are communicating securely with each other, but in reality they each share distinct keys with Eve, who can read, modify and forward messages — this is a **Man‑In‑The‑Middle (MITM)** attack.
+
+---
+
+#### Message flow (step by step)
+1. Alice picks a secret `a` and computes `A = g^a mod p`.  
+2. Alice sends `A` → **Eve** (Eve intercepts it).  
+3. Eve picks her own secret `e1`, computes `E1 = g^e1 mod p`, and **sends `E1` to Bob**, pretending it is `A`.  
+4. Bob picks a secret `b`, computes `B = g^b mod p`, and **sends `B` → Eve** (intercepted).  
+5. Eve picks another secret `e2`, computes `E2 = g^e2 mod p`, and **sends `E2` to Alice**, pretending it is `B`.  
+6. Alice computes `K_A = E2^a mod p = g^{a*e2}` (believing she shares this key with Bob).  
+   Bob computes `K_B = E1^b mod p = g^{b*e1}` (believing he shares this key with Alice).  
+   Eve, knowing `e1` and `e2`, computes both `K_EA = A^{e1} = g^{a*e1}` and `K_EB = B^{e2} = g^{b*e2}`.  
+7. Now Eve can:
+   - Decrypt messages from Alice using `K_EA`, read or modify them, then re‑encrypt using `K_EB` and forward to Bob.
+   - Do the same for messages from Bob to Alice.
+
+**Result:** Alice and Bob think they share a single secret key, but actually there are two keys (Alice↔Eve and Eve↔Bob). Eve fully mediates and controls the conversation.
+
+---
+
+```mermaid
+sequenceDiagram
+  participant Alice
+  participant Eve as Eve (MITM)
+  participant Bob
+
+  Alice->>Eve: A = g^a mod p  (public)
+  Eve-->>Bob: E1 = g^e1 mod p  (forged as A)
+  Bob->>Eve: B = g^b mod p
+  Eve-->>Alice: E2 = g^e2 mod p (forged as B)
+
+  Note over Alice,Eve: Alice computes K_A = E2^a = g^(a*e2)
+  Note over Bob,Eve: Bob computes K_B = E1^b = g^(b*e1)
+
+  Alice->>Eve: Enc(K_A, "msg1")
+  Eve->>Bob:   Dec(K_A) -> read/modify -> Enc(K_B, "msg1'")
+
+  Bob->>Eve:   Enc(K_B, "reply")
+  Eve->>Alice: Dec(K_B) -> read/modify -> Enc(K_A, "reply'")
