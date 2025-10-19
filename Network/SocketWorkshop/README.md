@@ -1,5 +1,27 @@
 # Ethical Hacking Workshop : Socket
 
+## Warning
+This workshop is for educational purposes only. Ethical hacking is conducted with the explicit permission of the system owner to improve security.
+
+## Table of Contents
+
+- [Ethical Hacking Workshop : Socket](#ethical-hacking-workshop--socket)
+  - [Warning](#warning)
+  - [Table of Contents](#table-of-contents)
+  - [Main goal of the workshop](#main-goal-of-the-workshop)
+  - [But first, what's a socket ?](#but-first-whats-a-socket-)
+  - [Flag platform](#flag-platform)
+  - [First challenge : time to hands on](#first-challenge--time-to-hands-on)
+  - [Second challenge : send your first packet](#second-challenge--send-your-first-packet)
+  - [Third challenge : what about the packets](#third-challenge--what-about-the-packets)
+  - [Fourth challenge : time to secure your communication](#fourth-challenge--time-to-secure-your-communication)
+    - [Description of the original protocol](#description-of-the-original-protocol)
+    - [Challenge goal](#challenge-goal)
+  - [Last challenge : Am I safe now ?](#last-challenge--am-i-safe-now-)
+    - [MITM attack on Diffie‑Hellman (DH) — explanation + diagrams](#mitm-attack-on-diffiehellman-dh--explanation--diagrams)
+      - [Short summary](#short-summary)
+      - [Message flow (step by step)](#message-flow-step-by-step)
+
 ## Main goal of the workshop
 
 You're going to develop your first network socket. The idea is to learn how to create a socket, read a message and send a message through a socket. You will have some challenges to solve which will make you practice network socket and also other subjects such as cryptography.
@@ -123,8 +145,6 @@ We're not going to implement DHE here, but it's interesting to know about. Now I
 #### Short summary
 In a classic **unauthenticated** Diffie‑Hellman exchange, an active adversary (Eve) can position herself between Alice and Bob, intercepting and replacing the public values. Instead of a single Alice↔Bob exchange, Eve performs **two** DH exchanges (Alice↔Eve and Eve↔Bob). Alice and Bob believe they are communicating securely with each other, but in reality they each share distinct keys with Eve, who can read, modify and forward messages — this is a **Man‑In‑The‑Middle (MITM)** attack.
 
----
-
 #### Message flow (step by step)
 1. Alice picks a secret `a` and computes `A = g^a mod p`.  
 2. Alice sends `A` → **Eve** (Eve intercepts it).  
@@ -139,8 +159,6 @@ In a classic **unauthenticated** Diffie‑Hellman exchange, an active adversary 
    - Do the same for messages from Bob to Alice.
 
 **Result:** Alice and Bob think they share a single secret key, but actually there are two keys (Alice↔Eve and Eve↔Bob). Eve fully mediates and controls the conversation.
-
----
 
 ```mermaid
 sequenceDiagram
