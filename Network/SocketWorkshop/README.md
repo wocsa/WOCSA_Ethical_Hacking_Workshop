@@ -17,10 +17,17 @@ This workshop is for educational purposes only. Ethical hacking is conducted wit
   - [Fourth challenge : time to secure your communication](#fourth-challenge--time-to-secure-your-communication)
     - [Description of the original protocol](#description-of-the-original-protocol)
     - [Challenge goal](#challenge-goal)
-  - [Last challenge : Am I safe now ?](#last-challenge--am-i-safe-now-)
+  - [Am I safe now ?](#am-i-safe-now-)
     - [MITM attack on Diffie‑Hellman (DH) — explanation + diagrams](#mitm-attack-on-diffiehellman-dh--explanation--diagrams)
       - [Short summary](#short-summary)
       - [Message flow (step by step)](#message-flow-step-by-step)
+    - [Digital Signatures \& ECDSA](#digital-signatures--ecdsa)
+      - [What is a Digital Signature?](#what-is-a-digital-signature)
+      - [How Digital Signatures Work](#how-digital-signatures-work)
+      - [Signature Process:](#signature-process)
+      - [ECDSA vs RSA](#ecdsa-vs-rsa)
+  - [Last challenge : little practice with signature](#last-challenge--little-practice-with-signature)
+  - [Conclusion](#conclusion)
 
 ## Main goal of the workshop
 
@@ -134,7 +141,7 @@ Then the server should send the flag and you just need to decrypt it with the ke
 *HOST = local-network-ip*
 *PORT = 9003*
 
-## Last challenge : Am I safe now ?
+## Am I safe now ?
 
 Check Wireshark — did you discover any other flags? Hopefully not. As mentioned earlier, recovering a or b is computationally infeasible for an attacker. Nevertheless, a private key can be leaked by mistake. To mitigate this risk, use **Ephemeral Diffie‑Hellman (DHE)**: the server generates a fresh ephemeral private key for each connection (or session). This provides perfect forward secrecy — even if an attacker compromises an old key, they cannot decrypt subsequent sessions.
 
@@ -179,3 +186,118 @@ sequenceDiagram
 
   Bob->>Eve:   Enc(K_B, "reply")
   Eve->>Alice: Dec(K_B) -> read/modify -> Enc(K_A, "reply'")
+```
+
+### Digital Signatures & ECDSA
+
+#### What is a Digital Signature?
+
+A **digital signature** is a cryptographic method used to:
+
+- Prove who sent the message (**authenticity**),
+- Ensure that the message was not modified (**integrity**),
+- Prevent the sender from denying it later (**non-repudiation**).
+
+It is a core security mechanism in protocols like HTTPS, SSH, Git, and blockchain systems.
+
+---
+
+#### How Digital Signatures Work
+
+Digital signatures are based on **asymmetric cryptography**: a pair of keys is used:
+
+- **Private key** → used to **sign** the message.
+- **Public key** → used to **verify** the signature.
+
+#### Signature Process:
+
+1. The sender (Alice) hashes the message.
+2. She signs the hash using her **private key**.
+3. The receiver (Bob) verifies the signature using Alice's **public key**.
+
+---
+
+#### ECDSA vs RSA
+
+| Feature              | **ECDSA** (Elliptic Curve)              | **RSA**                            |
+|----------------------|------------------------------------------|------------------------------------|
+| Key size (for 128-bit security) | 256 bits                           | 3072 bits                         |
+| Signature size       | ~64 bytes                                | ~256 bytes                        |
+| Performance          | Fast (esp. on small devices)             | Slower for signing, fast for verify |
+| Security basis       | Elliptic Curve Discrete Log Problem (ECDLP) | Integer Factorization           |
+| Used in              | Bitcoin, TLS 1.3, SSH, JWT               | TLS 1.2, PGP, SSH, JWT            |
+| Libraries            | Modern (cryptography, OpenSSL)           | Mature, widely available          |
+
+**ECDSA** is ideal for modern systems where efficiency matters (IoT, mobile, blockchain).  
+**RSA** is a good choice for compatibility with older systems.
+
+```mermaid
+sequenceDiagram
+  participant Alice as Alice (Sender)
+  participant Bob as Bob (Verifier)
+
+  Alice->>Alice: hash = SHA256(message)
+  Alice->>Alice: signature = Sign(hash, private_key)
+  Alice->>Bob: Send message + signature
+
+  Bob->>Bob: hash' = SHA256(message)
+  Bob->>Bob: Verify(signature, hash', public_key)
+  Bob-->>Bob: Valid? yes or not
+```
+
+## Last challenge : little practice with signature
+
+**Goal:** demonstrate signing and verification in a networked setting and teach why signatures are necessary to prevent active attacks (MITM).  
+Participants connect to a server that sends a plaintext flag together with an ECDSA signature and the server public key. The task is to:
+
+1. Connect to the server (TCP).
+2. Receive the server public key (PEM), the payload (flag), and the signature (all framed).
+3. Verify the signature using the received public key.
+4. If the signature is valid, display the flag.
+
+This challenge uses Python 3.8+ (works on 3.7 but modern versions recommended). The following Python package is required:
+
+- `cryptography` — for ECDSA key handling and verification.
+
+Install it with pip:
+
+```bash
+python3 -m pip install --user cryptography
+```
+
+## Conclusion
+
+Well, you have achieved a lot of work, now you know the basics of network socket and you also learned about cryptographic system. Next round will be about buffer !
+
+**Note:**
+A signed message is not encrypted — it can still be read by anyone, but any tampering will be detected.
+
+A secure communication system needs both:
+
+- Confidentiality (via encryption) to protect message content, and
+
+- Authenticity (via signatures or MACs) to ensure trust and integrity.
+
+```mermaid
+graph TD
+
+subgraph Encryption (Confidentiality)
+  AliceEncrypts[Alice encrypts message with Bob's key]
+  CipherText[Encrypted message]
+  BobDecrypts[Bob decrypts with private key]
+  EveEavesdropper[Eve sees ciphertext, but can't read it]
+
+  AliceEncrypts --> CipherText --> BobDecrypts
+  CipherText -.-> EveEavesdropper
+end
+
+subgraph Signature (Authenticity)
+  AliceSigns[Alice signs message with her private key]
+  PlainMessage[Plaintext message + signature]
+  BobVerifies[Bob verifies with Alice's public key]
+  EveTamper[Eve tries to modify message ➜ invalid signature]
+
+  AliceSigns --> PlainMessage --> BobVerifies
+  PlainMessage -.-> EveTamper
+end
+```
