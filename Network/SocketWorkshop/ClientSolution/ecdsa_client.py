@@ -34,7 +34,7 @@ def recv_framed(sock: socket.socket) -> bytes:
         data += chunk
     return data
 
-def main(server_host="0.0.0.0", server_port=9004):
+def main(server_host="192.168.1.34", server_port=9004):
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
         sock.connect((server_host, server_port))
         print(f"[+] Connected to {server_host}:{server_port}")

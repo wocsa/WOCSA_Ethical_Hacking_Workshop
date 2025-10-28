@@ -1,0 +1,63 @@
+version: "3.9"
+
+services:
+  web:
+    build:
+      context: ./WebChecker
+      dockerfile: Dockerfile
+    container_name: wocsa_web
+    ports:
+      - "0.0.0.0:8000:5000"  # Bind port 5000 du container sur toutes les interfaces de l'hôte
+    environment:
+      README_PATH: /project/README.md
+      WEB_HOST: 0.0.0.0
+      WEB_PORT: 5000
+    volumes:
+      - ./README.md:/project/README.md:ro
+    restart: unless-stopped
+
+  challenge1:
+    build: ./ServerChallenge/challenge1
+    container_name: challenge1
+    ports:
+      - "0.0.0.0:9001:9001"
+    networks:
+      - ctfnet
+
+  challenge2:
+    build: ./ServerChallenge/challenge2
+    container_name: challenge2
+    ports:
+      - "0.0.0.0:9002:9002"
+    networks:
+      - ctfnet
+
+  challenge3:
+    build: ./ServerChallenge/challenge3
+    container_name: challenge3
+    network_mode: host   
+    restart: unless-stopped
+    ports:
+      - "0.0.0.0:9999:9999"
+
+  challenge4:
+    build: ./ServerChallenge/challenge4
+    container_name: challenge4
+    ports:
+      - "0.0.0.0:9003:9003"
+    networks:
+      - ctfnet
+  
+  challenge5:
+    build: ./ServerChallenge/challenge5
+    container_name: challenge5
+    ports: 
+      - "0.0.0.0:9004:9004"
+    networks:
+      - ctfnet
+
+
+networks:
+  ctfnet:
+    driver: bridge
+

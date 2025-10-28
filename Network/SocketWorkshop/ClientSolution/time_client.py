@@ -11,7 +11,7 @@ import time
 
 
 PORT = 9002
-HOST = "127.0.0.1"
+HOST = "0.0.0.0"
 
 def recv_lines(sock, nlines=3):
     """Receive exactly nlines lines (ending with \\n). Return list of decoded lines without newlines."""

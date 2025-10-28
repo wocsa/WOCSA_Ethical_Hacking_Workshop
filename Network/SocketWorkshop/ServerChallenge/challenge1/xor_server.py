@@ -13,7 +13,7 @@ def repeating_xor(data: bytes, key: bytes) -> bytes:
     return bytes([b ^ key[i % len(key)] for i, b in enumerate(data)])
 
 #function for the server side
-def run(host='127.0.0.1', port=PORT, key=None):
+def run(host='0.0.0.0', port=PORT, key=None):
 
     # Encryption of the flag
     if key is None:
