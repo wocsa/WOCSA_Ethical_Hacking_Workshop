@@ -68,7 +68,7 @@ def run_client(server_ip: str, server_port: int):
         print(f"Decrypted flag: {flag.decode(errors='ignore')}")
 
 if __name__ == "__main__":
-    SERVER_IP = "0.0.0.0"  # Change to your server IP
+    SERVER_IP = "192.168.1.34"  # Change to your server IP
     SERVER_PORT = 9003
 
     run_client(SERVER_IP, SERVER_PORT)

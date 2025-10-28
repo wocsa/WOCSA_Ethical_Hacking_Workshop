@@ -47,9 +47,12 @@ For this workshop, we are going to use mainly *python* which is more user-friend
 
 For an interactive experience during the workshop, your task is to locate all the flags in the challenges and validate them via the web platform at:
 
-http://local-network-ip:8080
+http://local-network-ip:8000
 
-To start the platform and challenges, the facilitator must run the launch_workshop.sh script.
+To start the platform and challenges, the facilitator must run :
+```bash
+docker compose up -d --build
+```
 
 ## First challenge : time to hands on
 
@@ -255,6 +258,8 @@ Participants connect to a server that sends a plaintext flag together with an EC
 3. Verify the signature using the received public key.
 4. If the signature is valid, display the flag.
 
+PORT = 9004
+
 This challenge uses Python 3.8+ (works on 3.7 but modern versions recommended). The following Python package is required:
 
 - `cryptography` — for ECDSA key handling and verification.
@@ -281,7 +286,7 @@ A secure communication system needs both:
 ```mermaid
 graph TD
 
-subgraph Encryption (Confidentiality)
+subgraph Encryption_Confidentiality
   AliceEncrypts[Alice encrypts message with Bob's key]
   CipherText[Encrypted message]
   BobDecrypts[Bob decrypts with private key]
@@ -291,7 +296,7 @@ subgraph Encryption (Confidentiality)
   CipherText -.-> EveEavesdropper
 end
 
-subgraph Signature (Authenticity)
+subgraph Signature_Authenticity
   AliceSigns[Alice signs message with her private key]
   PlainMessage[Plaintext message + signature]
   BobVerifies[Bob verifies with Alice's public key]
