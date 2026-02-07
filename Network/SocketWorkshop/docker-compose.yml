@@ -32,14 +32,6 @@ services:
     networks:
       - ctfnet
 
-  challenge3:
-    build: ./ServerChallenge/challenge3
-    container_name: challenge3
-    network_mode: host   
-    restart: unless-stopped
-    ports:
-      - "0.0.0.0:9999:9999"
-
   challenge4:
     build: ./ServerChallenge/challenge4
     container_name: challenge4

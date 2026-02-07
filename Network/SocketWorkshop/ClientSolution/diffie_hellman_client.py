@@ -40,7 +40,8 @@ def run_client(server_ip: str, server_port: int):
         print(f"Received from server:\nA = {A}\np = {p}\ng = {g}\n")
 
         # Generate private key b
-        b = secrets.randbelow(p - 2) + 2
+        #b = secrets.randbelow(p - 2) + 2
+        b = 56
         B = pow(g, b, p)
 
         # Send B to server
@@ -53,14 +54,18 @@ def run_client(server_ip: str, server_port: int):
             if not chunk:
                 break
             ciphertext += chunk
+        
 
         if not ciphertext:
             print("No data received from server")
             return
 
+        print(ciphertext)
+
         # Compute shared key
         K = pow(A, b, p)
         key_byte = K % 256
+        print(key_byte)
 
         # Decrypt flag
         flag = xor_encrypt_decrypt(ciphertext, key_byte)
@@ -68,7 +73,7 @@ def run_client(server_ip: str, server_port: int):
         print(f"Decrypted flag: {flag.decode(errors='ignore')}")
 
 if __name__ == "__main__":
-    SERVER_IP = "192.168.1.34"  # Change to your server IP
+    SERVER_IP = "localhost"  # Change to your server IP
     SERVER_PORT = 9003
 
     run_client(SERVER_IP, SERVER_PORT)
