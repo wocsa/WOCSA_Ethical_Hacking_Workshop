@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>WOCSA - ORBITAL TRACKING SYSTEM</title>
+    <style>
+        body { background-color: #050505; color: #00ff00; font-family: 'Courier New', Courier, monospace; margin: 0; overflow: hidden; }
+        #container { display: flex; height: 100vh; }
+        #sidebar { width: 300px; border-right: 2px solid #333; padding: 20px; box-sizing: border-box; background: #0a0a0a; }
+        #radar-view { flex-grow: 1; position: relative; display: flex; justify-content: center; align-items: center; background: radial-gradient(circle, #111 0%, #000 100%); }
+        
+        h1 { font-size: 18px; border-bottom: 1px solid #00ff00; padding-bottom: 10px; margin-top: 0; }
+        .input-group { margin-bottom: 15px; }
+        label { display: block; font-size: 12px; color: #888; }
+        input { width: 100%; background: #000; border: 1px solid #444; color: #00ff00; padding: 5px; font-family: inherit; }
+        button { width: 100%; background: #004400; color: #00ff00; border: 1px solid #00ff00; padding: 10px; cursor: pointer; font-weight: bold; margin-top: 10px; }
+        button:hover { background: #006600; }
+        button.danger { background: #440000; border-color: #ff0000; color: #ff0000; }
+        
+        #log { height: 200px; overflow-y: auto; border: 1px solid #333; padding: 5px; font-size: 11px; margin-top: 20px; color: #aaa; }
+        .log-entry { margin-bottom: 2px; }
+        
+        canvas { border: 1px solid #333; box-shadow: 0 0 20px rgba(0, 255, 0, 0.1); }
+        
+        #status-overlay { position: absolute; top: 20px; right: 20px; font-size: 24px; font-weight: bold; }
+        .blink { animation: blinker 1s linear infinite; }
+        @keyframes blinker { 50% { opacity: 0; } }
+        
+        .safe { color: cyan; }
+        .warning { color: orange; }
+        .critical { color: red; }
+    </style>
+</head>
+<body>
+
+<div id="container">
+    <div id="sidebar">
+        <h1>WOCSA-SAT TRACKER</h1>
+        <p style="font-size: 12px; color: #666;">ENTRÉE TÉLÉMÉTRIE (0-3)</p>
+        
+        <div class="input-group">
+            <label>COORD X (0-3)</label>
+            <input type="number" id="valX" min="0" max="3" value="3">
+        </div>
+        <div class="input-group">
+            <label>COORD Y (0-3)</label>
+            <input type="number" id="valY" min="0" max="3" value="3">
+        </div>
+        <div class="input-group">
+            <label>COORD Z (0-3)</label>
+            <input type="number" id="valZ" min="0" max="3" value="3">
+        </div>
+        
+        <button onclick="addPoint()">AJOUTER POINT</button>
+        <button class="danger" onclick="resetSim()">RESET SYSTEM</button>
+        
+        <div id="log"></div>
+    </div>
+    
+    <div id="radar-view">
+        <div id="status-overlay" class="safe">STATUS: ACQUISITION...</div>
+        <canvas id="radarCanvas" width="800" height="800"></canvas>
+    </div>
+</div>
+
+<script>
+    const canvas = document.getElementById('radarCanvas');
+    const ctx = canvas.getContext('2d');
+    const logDiv = document.getElementById('log');
+    const statusDiv = document.getElementById('status-overlay');
+
+    // Configuration WOCSA
+    // ISS est positionnée au "centre logique" (ex: 150 unités)
+    const ISS_POS = { x: 100, y: 100, z: 100 };
+    const SCALE_FACTOR = 100; // Chaque unité WOCSA (0-3) vaut 100km/m
+    
+    // Historique des positions du satellite
+    let trajectory = [];
+    let explosion = null;
+
+    function log(msg) {
+        const div = document.createElement('div');
+        div.className = 'log-entry';
+        div.innerText = `> ${msg}`;
+        logDiv.prepend(div);
+    }
+
+    // Conversion valeur WOCSA (0-3) -> Pixel Canvas
+    // Le canvas fait 800x800. On centre l'ISS à 400,400.
+    // Échelle visuelle : 1 unité distance réelle = 1 pixel (simplifié)
+    function toCanvas(val, type) {
+        // Entrée val (0,1,2,3) -> Réel (0, 100, 200, 300)
+        let realVal = val * 100;
+        let offset = realVal - ISS_POS[type === 'x' ? 'x' : 'y'];
+        return 400 + offset; 
+    }
+
+    function addPoint() {
+        if(explosion) return; // Stop si mort
+
+        const x = parseInt(document.getElementById('valX').value);
+        const y = parseInt(document.getElementById('valY').value);
+        const z = parseInt(document.getElementById('valZ').value);
+
+        // Conversion WOCSA
+        const realX = x * 100;
+        const realY = y * 100;
+        const realZ = z * 100;
+
+        // Calcul distance 3D Euclidienne
+        const dist = Math.sqrt(
+            Math.pow(realX - ISS_POS.x, 2) +
+            Math.pow(realY - ISS_POS.y, 2) +
+            Math.pow(realZ - ISS_POS.z, 2)
+        );
+
+        const point = {
+            raw: {x, y, z},
+            real: {x: realX, y: realY, z: realZ},
+            dist: Math.round(dist)
+        };
+
+        trajectory.push(point);
+        log(`RECU: X=${x} Y=${y} Z=${z} | DIST: ${point.dist}`);
+        updateStatus(point.dist);
+        draw();
+
+        // Seuil critique collision (ex: < 20 unités)
+        if (point.dist < 50) {
+            triggerExplosion();
+        }
+    }
+
+    function updateStatus(dist) {
+        statusDiv.classList.remove('blink');
+        if (dist > 200) {
+            statusDiv.innerText = `STATUS: SAFE (DIST ${dist})`;
+            statusDiv.className = 'safe';
+        } else if (dist > 50) {
+            statusDiv.innerText = `STATUS: WARNING - CLOSING IN (DIST ${dist})`;
+            statusDiv.className = 'warning blink';
+        } else {
+            statusDiv.innerText = `STATUS: IMPACT IMMINENT`;
+            statusDiv.className = 'critical blink';
+        }
+    }
+
+    function triggerExplosion() {
+        explosion = { r: 10, alpha: 1.0 };
+        log("!!! CRITICAL FAILURE - SIGNAL LOST !!!");
+        statusDiv.innerText = "CRITICAL: IMPACT CONFIRMED";
+        statusDiv.className = "critical blink";
+        
+        // Boucle d'animation d'explosion
+        const anim = setInterval(() => {
+            draw();
+            explosion.r += 5;
+            explosion.alpha -= 0.02;
+            if(explosion.alpha <= 0) {
+                clearInterval(anim);
+            }
+        }, 16);
+    }
+
+    function resetSim() {
+        trajectory = [];
+        explosion = null;
+        statusDiv.innerText = "STATUS: ACQUISITION...";
+        statusDiv.className = "safe";
+        log("SYSTEM RESET");
+        draw();
+    }
+
+    function draw() {
+        // Clear
+        ctx.fillStyle = 'rgba(0,0,0,0.8)'; // Trail effect
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        // Grille (Radar)
+        ctx.strokeStyle = '#222';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        for(let i=0; i<800; i+=100) {
+            ctx.moveTo(i, 0); ctx.lineTo(i, 800);
+            ctx.moveTo(0, i); ctx.lineTo(800, i);
+        }
+        ctx.stroke();
+
+        // Cercles de distance
+        ctx.strokeStyle = '#333';
+        ctx.beginPath();
+        ctx.arc(400, 400, 100, 0, Math.PI*2); // Zone Warning
+        ctx.arc(400, 400, 250, 0, Math.PI*2); // Zone Safe
+        ctx.stroke();
+
+        // Dessiner l'ISS (Centre)
+        ctx.fillStyle = 'cyan';
+        ctx.shadowBlur = 15;
+        ctx.shadowColor = 'cyan';
+        ctx.fillRect(395, 395, 10, 10);
+        ctx.shadowBlur = 0;
+        ctx.fillStyle = 'white';
+        ctx.fillText("ISS (STATION)", 410, 410);
+
+        // Dessiner la trajectoire
+        if(trajectory.length > 0) {
+            ctx.strokeStyle = 'rgba(255, 0, 0, 0.5)';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            
+            trajectory.forEach((p, index) => {
+                let cx = toCanvas(p.raw.x, 'x');
+                let cy = toCanvas(p.raw.y, 'y');
+                
+                if(index === 0) ctx.moveTo(cx, cy);
+                else ctx.lineTo(cx, cy);
+                
+                // Point historique
+                ctx.fillStyle = 'rgba(255,0,0,0.3)';
+                ctx.fillRect(cx-2, cy-2, 4, 4);
+            });
+            ctx.stroke();
+
+            // Dessiner le Satellite (Dernier point)
+            let last = trajectory[trajectory.length-1];
+            let lx = toCanvas(last.raw.x, 'x');
+            let ly = toCanvas(last.raw.y, 'y');
+
+            if(!explosion) {
+                ctx.fillStyle = 'red';
+                ctx.shadowBlur = 20;
+                ctx.shadowColor = 'red';
+                ctx.beginPath();
+                ctx.arc(lx, ly, 6, 0, Math.PI*2);
+                ctx.fill();
+                ctx.shadowBlur = 0;
+                
+                // Afficher Z (Altitude relative)
+                ctx.fillStyle = '#ffaaaa';
+                ctx.fillText(`SAT [Z:${last.raw.z}]`, lx+10, ly-10);
+            }
+        }
+
+        // Effet Explosion
+        if(explosion) {
+            ctx.save();
+            ctx.translate(Math.random()*10 - 5, Math.random()*10 - 5); // Shake
+            
+            let last = trajectory[trajectory.length-1];
+            let lx = toCanvas(last.raw.x, 'x');
+            let ly = toCanvas(last.raw.y, 'y');
+
+            ctx.beginPath();
+            ctx.arc(lx, ly, explosion.r, 0, Math.PI*2);
+            ctx.fillStyle = `rgba(255, 50, 0, ${explosion.alpha})`;
+            ctx.fill();
+            ctx.strokeStyle = `rgba(255, 200, 0, ${explosion.alpha})`;
+            ctx.lineWidth = 4;
+            ctx.stroke();
+            
+            ctx.restore();
+        }
+    }
+
+    // Initial draw
+    draw();
+</script>
+
+</body>
+</html>
