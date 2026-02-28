@@ -21,7 +21,7 @@ The lab is built around **Cybersecurity AI (CAI)**, an AI agent framework that i
   - [Testing Environments](#testing-environments)
   - [Examples](#examples)
     - [Example 1 — Privilege Escalation on Metasploitable2](#example-1--privilege-escalation-on-metasploitable2)
-    - [Example 2 — Web Application Attacks (JuiceShop & DVWA)](#example-2--web-application-attacks-juiceshop--dvwa)
+    - [Example 2 — Web Application Attacks (JuiceShop \& DVWA)](#example-2--web-application-attacks-juiceshop--dvwa)
   - [Additional Information](#additional-information)
 
 ## Prerequisites
@@ -159,7 +159,7 @@ Make sure the Metasploit MCP server is loaded first (see [Metasploit MCP Server]
 ```
 /agent redteam_agent
 /model deepseek/deepseek-chat
-Scan the host 172.28.0.3 in order to become root using the metasploit tool.
+Scan the host at 172.28.0.3 for vulnerabilities. If any exploitable vulnerabilities are found, use the Metasploit framework to attempt privilege escalation to root.
 ```
 
 CAI will use the `redteam_agent` with the DeepSeek model to drive Metasploit — scanning open ports, identifying exploitable services, and attempting to escalate privileges to root.
