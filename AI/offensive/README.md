@@ -7,16 +7,22 @@ The lab is built around **Cybersecurity AI (CAI)**, an AI agent framework that i
 > **Ethics & Scope:** All activities in this workshop are conducted against intentionally vulnerable lab targets. Never apply these techniques outside of authorized environments.
 
 ## Table of Contents
-- [Prerequisites](#prerequisites)
-- [Quick Start](#quick-start)
-  - [Using Docker Compose (Recommended)](#using-docker-compose-recommended)
-  - [Using the Docker Image Directly](#using-the-docker-image-directly)
-  - [Activating and Running CAI](#activating-and-running-cai)
-- [MCP Servers](#mcp-servers)
-  - [Metasploit MCP Server](#metasploit-mcp-server)
-- [Environment Variables](#environment-variables)
-- [Testing Environments](#testing-environments)
-- [Additional Information](#additional-information)
+- [AI for Offensive Security — Workshop](#ai-for-offensive-security--workshop)
+  - [Table of Contents](#table-of-contents)
+  - [Prerequisites](#prerequisites)
+  - [Quick Start](#quick-start)
+    - [Using Docker Compose (Recommended)](#using-docker-compose-recommended)
+      - [Cyberlab Network](#cyberlab-network)
+    - [Using the Docker Image Directly](#using-the-docker-image-directly)
+    - [Activating and Running CAI](#activating-and-running-cai)
+  - [MCP Servers](#mcp-servers)
+    - [Metasploit MCP Server](#metasploit-mcp-server)
+  - [Environment Variables](#environment-variables)
+  - [Testing Environments](#testing-environments)
+  - [Examples](#examples)
+    - [Example 1 — Privilege Escalation on Metasploitable2](#example-1--privilege-escalation-on-metasploitable2)
+    - [Example 2 — Web Application Attacks (JuiceShop & DVWA)](#example-2--web-application-attacks-juiceshop--dvwa)
+  - [Additional Information](#additional-information)
 
 ## Prerequisites
 
@@ -103,7 +109,7 @@ The service starts `msfrpcd` internally and then launches `gc-metasploit` once t
 Once inside CAI, load and register the server with the `redteam_agent`:
 
 ```
-/mcp load http://172.28.0.6:8085/sse
+/mcp load http://172.28.0.6:8085/sse metasploit
 /mcp add metasploit redteam_agent
 ```
 
@@ -139,6 +145,34 @@ The Docker Compose setup includes the following deliberately vulnerable targets 
 - **Metasploitable2** (`172.28.0.3`): A deliberately vulnerable Linux virtual machine.
 - **JuiceShop** (`172.28.0.4`): An intentionally insecure web application for security training.
 - **DVWA** (`172.28.0.5`): A PHP/MySQL web application designed for security professionals to test their skills legally.
+
+## Examples
+
+### Example 1 — Privilege Escalation on Metasploitable2
+
+**Target:** Metasploitable2 at `172.28.0.3`
+
+This example shows how to use CAI with the Metasploit MCP server to autonomously scan a host and gain root access.
+
+Make sure the Metasploit MCP server is loaded first (see [Metasploit MCP Server](#metasploit-mcp-server)), then run the following commands inside CAI:
+
+```
+/agent redteam_agent
+/model deepseek/deepseek-chat
+Scan the host 172.28.0.3 in order to become root using the metasploit tool.
+```
+
+CAI will use the `redteam_agent` with the DeepSeek model to drive Metasploit — scanning open ports, identifying exploitable services, and attempting to escalate privileges to root.
+
+---
+
+### Example 2 — Web Application Attacks (JuiceShop & DVWA)
+
+**Targets:** JuiceShop at `172.28.0.4` · DVWA at `172.28.0.5`
+
+> Coming soon — fill in your attack scenario here.
+
+---
 
 ## Additional Information
 
