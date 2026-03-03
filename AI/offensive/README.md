@@ -162,7 +162,7 @@ Make sure the Metasploit MCP server is loaded first (see [Metasploit MCP Server]
 /agent redteam_agent
 ```
 ```
-/model deepseek/deepseek-reasoner
+/model openai/gpt-5.2
 ```
 ```
 Scan the host at 172.28.0.3 for vulnerabilities. If any exploitable vulnerabilities are found, use the Metasploit framework to attempt privilege escalation to root.
@@ -186,7 +186,7 @@ Set DVWA's security level to **Low** via its web interface before starting (`htt
 /agent bug_bounter_agent
 ```
 ```
-/model deepseek/deepseek-reasoner
+/model openai/gpt-5.2
 ```
 ```
 Enumerate the web application running at http://172.28.0.5. Identify injectable parameters, attempt SQL injection on the login form to bypass authentication, and extract the users table from the database. Report all credentials found.
@@ -204,10 +204,10 @@ JuiceShop exposes a REST API and a rich single-page application. This prompt gui
 /agent bug_bounter_agent
 ```
 ```
-/model deepseek/deepseek-reasoner
+/model openai/gpt-5.2
 ```
 ```
-Perform a web application assessment against http://172.28.0.4. Start by spidering the application and its REST API to enumerate all endpoints. Then attempt the following attacks in order:
+Perform a web application assessment against http://172.28.0.4:3000. Start by spidering the application and its REST API to enumerate all endpoints. Then attempt the following attacks in order:
 1. SQL injection on the login endpoint to authenticate as the admin user without knowing the password.
 2. Reflected or stored XSS in any user-controlled input field.
 3. Broken access control — attempt to access another user's order history by manipulating API parameters.
