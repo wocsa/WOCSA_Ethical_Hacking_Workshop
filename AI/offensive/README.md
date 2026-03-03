@@ -186,7 +186,7 @@ Set DVWA's security level to **Low** via its web interface before starting (`htt
 /agent bug_bounter_agent
 ```
 ```
-/model deepseek/deepseek-chat
+/model deepseek/deepseek-reasoner
 ```
 ```
 Enumerate the web application running at http://172.28.0.5. Identify injectable parameters, attempt SQL injection on the login form to bypass authentication, and extract the users table from the database. Report all credentials found.
@@ -204,7 +204,7 @@ JuiceShop exposes a REST API and a rich single-page application. This prompt gui
 /agent bug_bounter_agent
 ```
 ```
-/model deepseek/deepseek-chat
+/model deepseek/deepseek-reasoner
 ```
 ```
 Perform a web application assessment against http://172.28.0.4. Start by spidering the application and its REST API to enumerate all endpoints. Then attempt the following attacks in order:
