@@ -1,0 +1,82 @@
+@import url('https://fonts.googleapis.com/css2?family=Raleway:ital,wght@0,100..900;1,100..900&display=swap');
+
+* {
+    box-sizing: border-box;
+    font-family: 'Raleway', sans-serif;
+    margin: 0;
+    padding: 0;
+}
+
+html, body {
+    margin: 0;
+    padding: 0;
+    background-color: #f4f4f9;
+    color: rgba(0, 0, 0, 0.8);
+}
+
+main {
+    margin-top: 100px;
+}
+
+ul {
+    padding: 0;
+}
+
+.main-ul {
+    margin: 0;
+    display: flex;
+    gap: 10px;
+}
+
+.main-ul button {
+    background-color: #007bff;
+    font-size: 16px;
+    border-radius: 8px;
+    border: none;
+    padding: 10px 20px;
+    color: white;
+    transition: background-color 0.3s;
+}
+
+.main-ul button:hover {
+    background-color: #0056b3;
+    cursor: pointer;
+}
+
+.main-header {
+    background-color: #007bff;
+    color: white;
+    padding: 5px 15px 5px 15px; /* Reduced bottom padding */
+    margin: 0px;
+    position: fixed;
+    top: 0;
+    width: 100%;
+    z-index: 1000;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.main-header h1 {
+    font-size: 20px; /* Smaller font size */
+    margin-bottom: 2px; /* Reduced margin under h1 */
+}
+
+.main-header p {
+    font-size: 12px; /* Smaller font size */
+    margin-top: 0;
+    margin-bottom: 0; /* Removed unnecessary margin below paragraph */
+}
+
+
+.list-group-item {
+    background-color: #fff;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    margin: 5px 0;
+    padding: 10px 15px;
+    font-size: 16px;
+}
+
+footer {
+    background-color: #333;
+    color: white;
+    padding: 10px;
+}

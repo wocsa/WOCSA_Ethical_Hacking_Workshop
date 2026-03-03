@@ -1,0 +1,54 @@
+services:
+  web:
+    build: ./website
+    environment:
+      - SERVER_NAME=domain.local
+    ports:
+      - "8080:80"
+    restart: "always"
+    networks:
+      wocshack:
+        ipv4_address: 192.168.20.2
+    depends_on:
+      - db
+
+  db:
+    build: ./db
+    environment:
+      MARIADB_ROOT_PASSWORD: 63Ud2FfS
+      MARIADB_DATABASE: my_association_db
+      MARIADB_USER: eP3PWzJj
+      MARIADB_PASSWORD: vgTWMoJ2
+    restart: "always"
+    networks:
+      wocshack:
+        ipv4_address: 192.168.20.3
+
+  webmail:
+    build:
+      context: ./WOCShAck-tools/Webmail
+      dockerfile: Dockerfile
+    ports:
+      - "8081:80"
+    restart: "always"
+    networks:
+      wocshack:
+        ipv4_address: 192.168.20.4
+
+  admin_bot:
+    build: ./WOCShAck-tools/CSRF_Bot
+    environment:
+      - USERNAME=webmaster
+      - PASSWORD=SkkV4ejw!
+      - URL=http://192.168.20.2
+    restart: "always"
+    networks:
+      wocshack:
+        ipv4_address: 192.168.20.5
+
+networks:
+  wocshack:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 192.168.20.0/24

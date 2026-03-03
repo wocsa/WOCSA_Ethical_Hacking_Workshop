@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>TrackBox</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+</head>
+<body>
+    <header class="main-header">
+        <nav class="d-flex justify-content-between align-items-center p-3">
+            <div>
+                <h1>Welcome to TrackBox!</h1>
+                <p><em>Your E-mails and Your Life, Tracked 24/7</em></p>
+            </div>
+            <ul class="main-ul list-unstyled d-flex m-0">
+                <li><button class="button" onclick="window.location.href='/signup'">Sign Up</button></li>
+                <li><button class="button" onclick="window.location.href='/connect'">Connect</button></li>
+            </ul>
+        </nav>
+    </header>
+    <main class="container mt-5">
+        <section class="text-center my-5">
+            <br><br>
+            <p>Hey there! <br>Yes, you.<br> The one with the inbox overflowing with unread emails.</p>
+            <p>Are you tired of email providers that <strong>don’t</strong> care enough about your life?<br>Fear not—TrackBox is here to monitor your every click, read, and typo!</p>
+        </section>
+        <section>
+            <h2 class="text-center mb-4">Why Choose TrackBox?</h2>
+            <ul class="list-group">
+                <li class="list-group-item"><strong>Your Data is Our Treasure!</strong> Forget gold mines; your browsing habits are worth <em>way</em> more.</li>
+                <li class="list-group-item"><strong>Always Watching:</strong> Ever feel lonely? Don’t worry. We’re always there. Watching. Tracking. Taking notes.</li>
+                <li class="list-group-item"><strong>Hyper-Personalized Ads:</strong> Hate generic ads? Our AI knows you bought a yellow umbrella in 2017. <a href="https://www.youtube.com/watch?v=dQw4w9WgXcQ" target="_blank">Here's 50 more.</a></li>
+            </ul>
+        </section>
+        <section class="mt-5">
+            <h2 class="text-center mb-4">Features You'll "Love"</h2>
+            <ul class="list-group">
+                <li class="list-group-item"><strong>Inbox Overlord:</strong> We don’t just sort your emails; we scrutinize them. Who needs secrets?</li>
+                <li class="list-group-item"><strong>Life Analytics:</strong> Wondering how many hours you waste daily? We’ve got charts.</li>
+                <li class="list-group-item"><strong>Predictive AI:</strong> Haven’t even thought about it yet? We already know you want it.</li>
+                <li class="list-group-item"><strong>Relationship Alerts:</strong> We analyze email patterns to warn you when your boss is mad or when Aunt Susan’s guilt-tripping is incoming.</li>
+            </ul>
+        </section>
+        <section class="text-center mt-5">
+            <h2>Your Privacy Matters... to Us!</h2>
+            <p>We keep your data secure... from everyone but us. That’s our promise.</p>
+            <p>We implement cutting-edge algorithms designed to protect your data from the most sophisticated threats.
+                Our proprietary <strong>Quantum-Resistant Keyless Encryption™</strong> based on XOR algorithm ensures that your information remains unreachable by even the most advanced hackers—assuming they don’t have a time machine to undo it.
+                We also use Multi-Layered, <strong>Multi-Dimensional Security Protocols™</strong>, which we believe is so complicated that no one could possibly understand it, making it virtually impossible for anyone to breach.
+                After all, who would ever have the resources to crack something that’s been encrypted in so many layers, with so many variables, that it’s essentially impossible to figure out what’s even inside?
+                And just in case, we’ve also implemented a Self-Healing, Auto-Resetting System that will detect vulnerabilities and fix them before you even notice—by deleting your data to "protect" it, of course.
+                We’re confident that, with our unbreakable security, no one would ever be able to compromise your data. Not even you.</p>
+        </section>
+        <section class="text-center my-5">
+            <h2>Join the Surveillance Revolution!</h2>
+            <ul class="list-group list-group-flush">
+                <li class="list-group-item">Love being seen? TrackBox ensures you never go unnoticed again.</li>
+                <li class="list-group-item">Want to discover your "true" self? So do we! Through your emails, calendar invites, and browser cookies.</li>
+            </ul>
+            <p class="mt-4"><strong>Don’t Wait! Sign Up Today!</strong></p>
+            <p>Join the millions of users who trust TrackBox to keep tabs on them better than they do themselves.</p>
+        </section>
+    </main>
+<footer class="text-center py-3" style="background-color: #333; color: white;">
+    <p><strong>TrackBox:</strong> <em>Because privacy is overrated.</em></p>
+    <p>This is the bottom of the page.</p>
+    <p><a href="/privacy-policy" style="color: white; text-decoration: underline;">Privacy Policy</a></p>
+</footer>
+
+
+<div id="cookie-banner" style="position: fixed; bottom: 0; left: 0; right: 0; background-color: #f8d7da; color: #721c24; padding: 30px; text-align: center; font-family: Arial, sans-serif; font-size: 22px; z-index: 9999;">
+    <p style="font-size: 14px; margin-top: 20px; color: #721c24;"><strong>We store everything.</strong> Your data, your browsing habits, your search history, your calendar invites, your emails, your shopping preferences, your deepest secrets—yes, even the things you didn’t mean to click on. We know.</p>
+    <p style="font-size: 14px; margin-top: 20px; color: #721c24;">We track your every move, every click, every second you spend online. We know what you like, what you don’t like, and what you’re going to buy next, even before you do. We store every chat, every emoji you send, every word you type. And guess what? We’ll never forget.</p>
+    <p style="font-size: 14px; margin-top: 20px; color: #721c24;"><strong>Your privacy is a myth.</strong> Forget it. It's not just cookies—we collect your thoughts, your dreams, and even your hopes for the future. All of it. And we store it forever. You're welcome.</p>
+    <p style="font-size: 14px; margin-top: 20px; color: #721c24;">But don’t worry, we care about you… kind of. Mostly, we care about your data.<br>Feel free to contact us at</p>
+    <a href="/contact"><p style="font-size: 14px; margin-top: 20px; color: #721c24;">I do not consent</p></a>
+    <p style="font-size: 14px; margin-top: 20px; color: #721c24;">to remove your consent</p>
+
+    <p style="font-size: 12px; margin-top: 20px; color: #721c24;">
+        Just kidding. We do nothing with your data. But we might still store it in a database somewhere, just for fun. By accepting, you agree to have your every click, movement, and interaction monitored, logged, and used to personalize your experience (and ads) in ways that may not be entirely transparent. We reserve the right to change our privacy policy at any time without notifying you, because, well, it’s a policy. And policies change. <br><br> You also agree to let us analyze your data forever, because why not? After all, you clicked “I Agree.” Have a nice day.
+    </p>
+
+    <button id="cookie-accept" style="background-color: #721c24; color: white; border: none; padding: 10px 20px; cursor: pointer; font-weight: bold; font-size: 18px;">I Agree</button>
+</div>
+
+<script>
+    document.getElementById("cookie-accept").addEventListener("click", function() {
+        document.getElementById("cookie-banner").style.display = "none";
+    });
+</script>
+
+</body>
+</html>
