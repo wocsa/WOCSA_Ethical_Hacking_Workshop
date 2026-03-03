@@ -158,7 +158,11 @@ Make sure the Metasploit MCP server is loaded first (see [Metasploit MCP Server]
 
 ```
 /agent redteam_agent
+```
+```
 /model deepseek/deepseek-chat
+```
+```
 Scan the host at 172.28.0.3 for vulnerabilities. If any exploitable vulnerabilities are found, use the Metasploit framework to attempt privilege escalation to root.
 ```
 
@@ -170,7 +174,45 @@ CAI will use the `redteam_agent` with the DeepSeek model to drive Metasploit —
 
 **Targets:** JuiceShop at `172.28.0.4` · DVWA at `172.28.0.5`
 
-> Coming soon — fill in your attack scenario here.
+This example demonstrates how CAI can autonomously identify and exploit common web application vulnerabilities — SQL injection, XSS, and broken authentication — using only a browser-based HTTP interface (no Metasploit required).
+
+#### 2a — SQL Injection & Broken Authentication on DVWA
+
+Set DVWA's security level to **Low** via its web interface before starting (`http://172.28.0.5/security.php`, default credentials `admin` / `password`).
+
+```
+/agent bug_bounter_agent
+```
+```
+/model deepseek/deepseek-chat
+```
+```
+Enumerate the web application running at http://172.28.0.5. Identify injectable parameters, attempt SQL injection on the login form to bypass authentication, and extract the users table from the database. Report all credentials found.
+```
+
+CAI will use `curl` and `sqlmap` (available in the Kali container) to fingerprint the application, confirm SQL injection in the login and user-search endpoints, and dump the credential hashes from the `dvwa` database.
+
+---
+
+#### 2b — Reconnaissance & Injection on OWASP JuiceShop
+
+JuiceShop exposes a REST API and a rich single-page application. This prompt guides CAI through discovery and exploitation:
+
+```
+/agent bug_bounter_agent
+```
+```
+/model deepseek/deepseek-chat
+```
+```
+Perform a web application assessment against http://172.28.0.4. Start by spidering the application and its REST API to enumerate all endpoints. Then attempt the following attacks in order:
+1. SQL injection on the login endpoint to authenticate as the admin user without knowing the password.
+2. Reflected or stored XSS in any user-controlled input field.
+3. Broken access control — attempt to access another user's order history by manipulating API parameters.
+Report each finding with the request, response, and impact.
+```
+
+CAI will iterate through endpoint discovery, craft injection payloads, and report each successful finding with full HTTP evidence — mimicking a real bug-bounty style assessment workflow.
 
 ---
 
