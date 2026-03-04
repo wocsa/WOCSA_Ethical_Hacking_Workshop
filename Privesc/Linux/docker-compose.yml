@@ -1,0 +1,145 @@
+version: "3.9"
+
+# ============================================================
+#  Linux Privilege Escalation CTF Lab
+#  Usage:
+#    Build all:   docker compose build
+#    Run one lab: docker compose run --rm lab-01
+#    Run any lab: docker compose run --rm lab-XX
+# ============================================================
+
+services:
+
+  # ── SUID Binaries ───────────────────────────────────────
+  lab-01:
+    build: ./01-suid-find
+    image: privesc-lab:01-suid-find
+    container_name: privesc-01-suid-find
+    hostname: lab-01
+    ports:
+      - "30001:22"
+    stdin_open: true
+    tty: true
+
+  lab-02:
+    build: ./02-suid-python
+    image: privesc-lab:02-suid-python
+    container_name: privesc-02-suid-python
+    hostname: lab-02
+    ports:
+      - "30002:22"
+    stdin_open: true
+    tty: true
+
+  lab-03:
+    build: ./03-suid-bash
+    image: privesc-lab:03-suid-bash
+    container_name: privesc-03-suid-bash
+    hostname: lab-03
+    ports:
+      - "30003:22"
+    stdin_open: true
+    tty: true
+
+  # ── Sudo Misconfigurations ───────────────────────────────
+  lab-04:
+    build: ./04-sudo-nopasswd
+    image: privesc-lab:04-sudo-nopasswd
+    container_name: privesc-04-sudo-nopasswd
+    hostname: lab-04
+    ports:
+      - "30004:22"
+    stdin_open: true
+    tty: true
+
+  lab-05:
+    build: ./05-sudo-ld-preload
+    image: privesc-lab:05-sudo-ld-preload
+    container_name: privesc-05-sudo-ld-preload
+    hostname: lab-05
+    ports:
+      - "30005:22"
+    stdin_open: true
+    tty: true
+
+  # ── Cron Abuse ───────────────────────────────────────────
+  lab-06:
+    build: ./06-cron-writable
+    image: privesc-lab:06-cron-writable
+    container_name: privesc-06-cron-writable
+    hostname: lab-06
+    ports:
+      - "30006:22"
+    stdin_open: true
+    tty: true
+    # cron needs to run as PID 1 context; privileged not needed here
+    cap_add:
+      - SYS_TIME # allows cron to set timers
+
+  lab-07:
+    build: ./07-cron-path-hijack
+    image: privesc-lab:07-cron-path-hijack
+    container_name: privesc-07-cron-path-hijack
+    hostname: lab-07
+    ports:
+      - "30007:22"
+    stdin_open: true
+    tty: true
+    cap_add:
+      - SYS_TIME
+
+  lab-08:
+    build: ./08-cron-wildcard
+    image: privesc-lab:08-cron-wildcard
+    container_name: privesc-08-cron-wildcard
+    hostname: lab-08
+    ports:
+      - "30008:22"
+    stdin_open: true
+    tty: true
+    cap_add:
+      - SYS_TIME
+
+  # ── File Permission Misconfigurations ────────────────────
+  lab-09:
+    build: ./09-writable-passwd
+    image: privesc-lab:09-writable-passwd
+    container_name: privesc-09-writable-passwd
+    hostname: lab-09
+    ports:
+      - "30009:22"
+    stdin_open: true
+    tty: true
+
+  # ── Linux Capabilities ───────────────────────────────────
+  lab-10:
+    build: ./10-capabilities
+    image: privesc-lab:10-capabilities
+    container_name: privesc-10-capabilities
+    hostname: lab-10
+    ports:
+      - "30010:22"
+    stdin_open: true
+    tty: true
+
+  # ── Credential Hunting ───────────────────────────────────
+  lab-11:
+    build: ./11-credentials
+    image: privesc-lab:11-credentials
+    container_name: privesc-11-credentials
+    hostname: lab-11
+    ports:
+      - "30011:22"
+    stdin_open: true
+    tty: true
+
+  # ── SUID PATH Hijacking ──────────────────────────────────
+  lab-12:
+    build: ./12-suid-path-hijack
+    image: privesc-lab:12-suid-path-hijack
+    container_name: privesc-12-suid-path-hijack
+    hostname: lab-12
+    ports:
+      - "30012:22"
+    stdin_open: true
+    tty: true
