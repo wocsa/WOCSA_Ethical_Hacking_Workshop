@@ -10,6 +10,8 @@
 #include <unistd.h>
 
 int main(void) {
+    setuid(0);
+    setgid(0);
     printf("=== System Information ===\n");
     printf("Services:\n");
     system("service --status-all 2>&1 | head -5");   /* relative path! */

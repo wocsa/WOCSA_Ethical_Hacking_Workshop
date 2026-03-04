@@ -19,7 +19,7 @@ RUN echo "WOCSA{sudo_awk_gtfobins}" > /root/flag.txt && \
     chmod 600 /root/flag.txt
 
 # VULNERABILITY: NOPASSWD sudo on a GTFOBins binary
-RUN echo "ctf ALL=(root) NOPASSWD: /usr/bin/awk" >> /etc/sudoers
+RUN echo "wocsa ALL=(root) NOPASSWD: /usr/bin/awk" >> /etc/sudoers
 
 RUN echo "=== Lab 04: Sudo NOPASSWD → awk ===" > /home/wocsa/README.txt && \
     echo "Run: sudo -l" >> /home/wocsa/README.txt && \

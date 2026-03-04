@@ -23,7 +23,7 @@ RUN echo "WOCSA{ld_preload_env_keep_pwnd}" > /root/flag.txt && \
 
 # VULNERABILITY: env_keep allows LD_PRELOAD passthrough
 RUN echo "Defaults env_keep+=LD_PRELOAD" >> /etc/sudoers && \
-    echo "ctf ALL=(root) NOPASSWD: /usr/bin/find" >> /etc/sudoers
+    echo "wocsa ALL=(root) NOPASSWD: /usr/bin/find" >> /etc/sudoers
 
 # Scaffold for the player — they still need to write & compile the payload
 RUN cat > /home/wocsa/evil.c << 'EOF'

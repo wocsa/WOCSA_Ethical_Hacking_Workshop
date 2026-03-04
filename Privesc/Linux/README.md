@@ -3,7 +3,8 @@
 A collection of 12 Docker-based labs covering the most common Linux privesc
 techniques found in CTF competitions and penetration tests.
 
-Each container starts you as the low-privilege user **`ctf`** (password: `ctf`).
+Each container starts you as the low-privilege user **`wocsa`** (with a unique
+password per lab — see the Dockerfile for each lab).
 The goal of every lab is to **read `/root/flag.txt`**.
 
 ---
@@ -14,8 +15,11 @@ The goal of every lab is to **read `/root/flag.txt`**.
 # Build all images (first run — takes a few minutes)
 docker compose build
 
-# Drop into a specific lab
-docker compose run --rm lab-01
+# Start all labs (SSH accessible on ports 30001–30012)
+docker compose up -d
+
+# Connect to a specific lab via SSH
+ssh wocsa@localhost -p 30001
 
 # Or build & run a single lab without docker compose
 docker build -t privesc-lab-01 ./01-suid-find
@@ -281,11 +285,11 @@ Each lab follows the same pattern:
 
 1. Create a new directory `NN-technique-name/`
 2. Write a `Dockerfile` with:
-   - A low-privilege `ctf` user (password: `ctf`)
+   - A low-privilege `wocsa` user (with a unique password)
    - `/root/flag.txt` readable only by root
    - The vulnerability configured deliberately
-   - A `/home/ctf/README.txt` with a hint
-3. For cron-based labs, include an `entrypoint.sh` that starts `cron` then `su`s to `ctf`
+   - A `/home/wocsa/README.txt` with a hint
+3. For cron-based labs, include an `entrypoint.sh` that starts `cron` then `su`s to `wocsa`
 4. Add the service to `docker-compose.yml`
 
 ---
