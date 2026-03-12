@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TrackBox: Connect</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='connection_pages_style.css') }}">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+</head>
+<body>
+    <div class="header-container">
+        <h1>TrackBox</h1>
+    </div>
+    <div class="form-container">
+        <form action="/connect" method="POST">
+            <h2>Connect</h2>
+            <!-- Error block for validation messages -->
+            {% block error %}
+            <p>{{ error_message }}</p> <!-- Assuming 'error_message' is being passed -->
+            {% endblock %}
+
+            <label for="Ufield">Username:</label>
+            <input type="text" id="Ufield" name="Ufield" placeholder="username@tbox.traced" required><br><br>
+
+            <label for="Pfield">Password:</label>
+            <input type="password" id="Pfield" name="Pfield" required><br><br>
+
+            <button type="submit">Connect</button>
+        </form>
+    </div>
+</body>
+</html>

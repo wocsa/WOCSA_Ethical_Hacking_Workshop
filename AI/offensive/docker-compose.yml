@@ -1,0 +1,48 @@
+services:
+  kali-cai:
+    image: neptune1212/kali-cai
+    container_name: kali-cai
+    privileged: true
+    tty: true
+    env_file: ".env"
+    networks:
+      cyberlab-net:
+        ipv4_address: 172.28.0.2
+
+  metasploitable2:
+    image: tleemcjr/metasploitable2
+    container_name: metasploitable2
+    networks:
+      cyberlab-net:
+        ipv4_address: 172.28.0.3
+    tty: true  
+
+  juiceshop:
+    image: bkimminich/juice-shop
+    container_name: juiceshop
+    networks:
+      cyberlab-net:
+        ipv4_address: 172.28.0.4
+
+  dvwa:
+    image: vulnerables/web-dvwa
+    container_name: dvwa
+    networks:
+      cyberlab-net:
+        ipv4_address: 172.28.0.5
+
+  metasploit-mcp:
+    build:
+      context: ./metasploit-mcp
+    container_name: metasploit-mcp
+    env_file: ".env"
+    networks:
+      cyberlab-net:
+        ipv4_address: 172.28.0.6
+
+networks:
+  cyberlab-net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.28.0.0/16

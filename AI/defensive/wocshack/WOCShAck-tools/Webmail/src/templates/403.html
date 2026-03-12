@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>403 Forbidden</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 50px;
+        }
+        h1 {
+            font-size: 50px;
+            color: red;
+        }
+        p {
+            font-size: 20px;
+        }
+        a {
+            text-decoration: none;
+            color: blue;
+        }
+        img {
+            width: 300px;
+            margin-top: 20px;
+            border-radius: 10px;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+<body>
+    <h1>403</h1>
+    <p>Access Denied! You don’t have permission to view this page.</p>
+    <img src="{{ url_for('static', filename='forbidden.jpg') }}" alt="Forbidden">
+    <br>
+    <a href="/">Go Back Home</a>
+</body>
+</html>

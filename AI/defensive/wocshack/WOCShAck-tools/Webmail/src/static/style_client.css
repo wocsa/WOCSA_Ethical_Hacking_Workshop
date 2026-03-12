@@ -1,0 +1,61 @@
+html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%; /* Ensure the page fills the viewport */
+    display: flex;
+    flex-direction: column;
+}
+
+body {
+    background-color: #f8f9fa;
+    color: #343a40;
+}
+
+header {
+    z-index: 1000;
+    position: relative;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+header button {
+    position: absolute;  /* Positioning the button absolutely */
+    right: 20px;  /* Distance from the right edge of the header */
+}
+
+.sidebar {
+    height: calc(100vh - 56px); /* Account for header height */
+    position: fixed;
+    top: 56px;
+    left: 0;
+    overflow-y: auto;
+    border-right: 1px solid rgba(0, 0, 0, 0.1);
+    z-index: 999; /* Sidebar stays under the header but above the main content */
+    width: 250px; /* Fixed sidebar width */
+    background-color: #f8f9fa;
+}
+
+main {
+    margin-left: 250px; /* Space for the sidebar */
+    flex: 1; /* Push the footer down */
+    padding-bottom: 1rem;
+}
+
+.email-container {
+    transition: transform 0.3s ease-in-out;
+}
+
+.email-container:hover {
+    transform: scale(1.005); /* Example of a hover animation */
+}
+
+footer {
+    background-color: #343a40;
+    color: white;
+    text-align: center;
+    padding: 10px;
+    width: 100%; /* Ensure footer spans the full width */
+    position: absolute; /* Allow overlap with sidebar */
+    bottom: 0; /* Align footer at the very bottom of the viewport */
+    left: 0; /* Start from the left of the viewport */
+    z-index: 1000; /* Ensure footer is above the sidebar */
+}
