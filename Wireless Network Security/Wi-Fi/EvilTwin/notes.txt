@@ -1,0 +1,46 @@
+Check how many wireless interface do we have :
+ip link look at those which begin by w
+
+then verify if AP mode is possible 
+iw list | grep -A 10 "Supported interface modes"
+
+then if we have a wireless interface
+ip link set $interface$ down 
+ip addr flush dev $interface$
+ip link set $interface$ up
+hostapd evil.conf
+
+otherwise create a virtual interface 
+iw dev $interface$ interface add ap0 type __ap
+
+verify the mode 
+iw dev
+
+si pas en type AP
+sudo ip link set ap0 down
+sudo iw dev ap0 set type __ap
+sudo ip link set ap0 up
+
+
+sudo hostapd *.conf
+
+on veut maintenant router vers internet pour agir en tant que roueur MITM
+sudo ip a a 192.168.50.1/24 dev ap0
+sudo ip link set ap0 up
+
+forwarding 
+echo 1 > /proc/sys/net/ipv4/ip_forward
+
+règle de NAT
+iptables -t nat -A postrouting -s 192.168.50.0/24 -o $interface_internet$ -j masquerade 
+iptables -A FORWARD -i ap0 -o $interface_internet$ -j ACCEPT
+iptables -A FORWARD -i $interface_internet$ -o ap0 -m state --state RELATED,ESTABLISHED -j ACCEPT
+
+Maintenant on doit fournir une ip au client et un serveur dns 
+sudo apt install dnsmasq
+
+dnsmasq -C *.conf -d 
+
+probablement le port 53 est déjà utilisé
+sudo lsof -i :53
+sudo systemctl stop systemd-resolved
