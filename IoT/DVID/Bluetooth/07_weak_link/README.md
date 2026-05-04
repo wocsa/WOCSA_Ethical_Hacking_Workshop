@@ -1,5 +1,8 @@
 # Challenge 07 - Weak Link
 
+> [!WARNING]
+> **This challenge is still under development and is not yet available.**
+
 **Tier:** Advanced
 **Difficulty:** ⭐⭐⭐⭐
 **Category:** Bluetooth Low Energy

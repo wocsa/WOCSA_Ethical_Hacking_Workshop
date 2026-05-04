@@ -1,5 +1,8 @@
 # Challenge 04 - Identity Theft
 
+> [!WARNING]
+> **This challenge is still under development and is not yet available.**
+
 **Tier:** Intermediate
 **Difficulty:** ⭐⭐⭐
 **Category:** Bluetooth Low Energy
