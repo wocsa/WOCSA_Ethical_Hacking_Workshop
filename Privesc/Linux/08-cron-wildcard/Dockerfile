@@ -20,7 +20,7 @@ RUN apt-get update -qq && \
     apt-get install -y --no-install-recommends openssh-server cron tar && \
     rm -rf /var/lib/apt/lists/*
 
-RUN useradd -m -s /bin/bash wocsa && echo "wocsa:Mht3dRhXD9di" | chpasswd
+RUN useradd -m -s /bin/bash wocsa && echo "wocsa:wocsa" | chpasswd
 
 RUN echo "WOCSA{tar_wildcard_injection_pwnd}" > /root/flag.txt && \
     chmod 600 /root/flag.txt

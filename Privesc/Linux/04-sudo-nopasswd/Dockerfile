@@ -13,7 +13,7 @@ RUN apt-get update -qq && \
     apt-get install -y --no-install-recommends openssh-server sudo gawk && \
     rm -rf /var/lib/apt/lists/*
 
-RUN useradd -m -s /bin/bash wocsa && echo "wocsa:n8ZnTh2GoqMh" | chpasswd
+RUN useradd -m -s /bin/bash wocsa && echo "wocsa:wocsa" | chpasswd
 
 RUN echo "WOCSA{sudo_awk_gtfobins}" > /root/flag.txt && \
     chmod 600 /root/flag.txt

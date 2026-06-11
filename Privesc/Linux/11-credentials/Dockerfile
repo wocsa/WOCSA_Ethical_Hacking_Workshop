@@ -19,7 +19,7 @@ RUN apt-get update -qq && \
 # Set root password — same as the one in the config file
 RUN echo "root:Sup3rS3cr3t!2024" | chpasswd
 
-RUN useradd -m -s /bin/bash wocsa && echo "wocsa:Fz2bSOCu9dII" | chpasswd
+RUN useradd -m -s /bin/bash wocsa && echo "wocsa:wocsa" | chpasswd
 
 RUN echo "WOCSA{credential_reuse_is_bad}" > /root/flag.txt && \
     chmod 600 /root/flag.txt

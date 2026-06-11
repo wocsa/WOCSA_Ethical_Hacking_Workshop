@@ -21,7 +21,7 @@ RUN apt-get update -qq && \
     apt-get install -y --no-install-recommends openssh-server gcc libc6-dev init-system-helpers procps && \
     rm -rf /var/lib/apt/lists/*
 
-RUN useradd -m -s /bin/bash wocsa && echo "wocsa:SoJqSSAV5aPl" | chpasswd
+RUN useradd -m -s /bin/bash wocsa && echo "wocsa:wocsa" | chpasswd
 
 RUN echo "WOCSA{suid_path_hijack_pwnd}" > /root/flag.txt && \
     chmod 600 /root/flag.txt

@@ -1,10 +1,9 @@
 # Linux Privilege Escalation — CTF Lab
 
-A collection of 12 Docker-based labs covering the most common Linux privesc
+A collection of 14 Docker-based labs covering the most common Linux privesc
 techniques found in CTF competitions and penetration tests.
 
-Each container starts you as the low-privilege user **`wocsa`** (with a unique
-password per lab — see the Dockerfile for each lab).
+Each container starts you as the low-privilege user **`wocsa`** (the password is alaway **`wocsa`**) — see the Dockerfile for each lab).
 The goal of every lab is to **read `/root/flag.txt`**.
 
 ---
@@ -15,7 +14,7 @@ The goal of every lab is to **read `/root/flag.txt`**.
 # Build all images (first run — takes a few minutes)
 docker compose build
 
-# Start all labs (SSH accessible on ports 30001–30012)
+# Start all labs (SSH accessible on ports 30001–30014)
 docker compose up -d
 
 # Connect to a specific lab via SSH
@@ -44,6 +43,8 @@ docker run --rm -it privesc-lab-01
 | 10 | Linux capabilities (cap_setuid) | ⭐⭐ Medium |
 | 11 | Credential hunting & reuse | ⭐ Easy |
 | 12 | SUID binary → PATH hijacking | ⭐⭐ Medium |
+| 13 | Dirty Pipe (CVE-2022-0847) | ⭐⭐⭐ Hard |
+| 14 | PwnKit / copy_fail (CVE-2021-4034) | ⭐⭐⭐ Hard |
 
 ---
 
@@ -253,6 +254,124 @@ cat /root/flag.txt
 
 ---
 
+### Lab 13 — Dirty Pipe (CVE-2022-0847)(Works only on old machines)
+
+> ⚠️ **Kernel dependency:** Docker shares the *host* kernel — the container
+> image does not change it.  Dirty Pipe requires **Linux 5.8 – 5.16.11**
+> (also 5.15.x < 5.15.25 and 5.10.x < 5.10.102).
+>
+> Unlike Dirty COW there is **no race condition**: on a vulnerable kernel the
+> page-cache write is immediate and deterministic — the exploit never fails.
+> On a patched kernel the `write()` returns `EINVAL` and nothing is overwritten.
+>
+> **To run this lab reliably**, wrap the container in a VM pinned to a
+> vulnerable kernel:
+> ```
+> Vagrant box : ubuntu/impish64   (Ubuntu 21.10, kernel 5.13.0)
+> Package     : linux-image-5.13.0-19-generic
+> ```
+> Check your current host kernel with `uname -r` before starting.
+
+**Background:** Every `pipe_buffer` entry has a `flags` field.
+When a new buffer entry is allocated it is **not zeroed**, so it inherits
+whatever flags the previous occupant left behind.  If a prior `write()` into
+the pipe set `PIPE_BUF_FLAG_CAN_MERGE` on a slot, and that slot is later
+reused to hold a page brought in by `splice()` from a read-only file, a
+subsequent `write()` into the pipe will **merge directly onto that cached
+page** — bypassing copy-on-write entirely.  Because the page cache is the
+authoritative source for both `mmap()` and `exec()`, a SUID-root binary
+whose cached pages are patched this way will execute attacker-controlled
+code the next time any user runs it.  The on-disk inode is never touched.
+
+```bash
+# ── Detection ────────────────────────────────────────────────
+uname -r
+# Vulnerable: 5.8.0 ≤ kernel ≤ 5.16.11
+#             5.15.x < 5.15.25
+#             5.10.x < 5.10.102
+
+# A dedicated SUID-root target binary is waiting in the container:
+ls -la /usr/local/bin/suid_target   # -rwsr-xr-x  root root
+
+# ── Exploitation ─────────────────────────────────────────────
+cd ~
+make                                 # gcc -O2 dirtypipe.c -o dirtypipe
+./dirtypipe /usr/local/bin/suid_target
+# [*] CVE-2022-0847 Dirty Pipe
+# [*] Writing shellcode payload (63 bytes) at file offset 1
+# [+] Page-cache patch applied.
+# [+] Execute the patched binary now:
+#       /usr/local/bin/suid_target -p
+
+# In a second terminal (or the same one):
+/usr/local/bin/suid_target -p       # runs as root via the patched page cache
+cat /root/flag.txt
+
+# Back in the exploit terminal — press ENTER to restore the binary:
+# [*] Binary restored.
+```
+
+**What happens step by step:**
+1. `prep_pipe()` fills then drains the pipe — every buffer slot now has `PIPE_BUF_FLAG_CAN_MERGE` set from the writes
+2. `splice(fd, offset=1, pipe, ...)` pulls one page of `suid_target` into the pipe — the page arrives with `CAN_MERGE` already set on its slot
+3. `write(pipe, shellcode, len)` — the kernel sees `CAN_MERGE`, skips CoW, and writes the shellcode directly onto the live page-cache entry
+4. The on-disk binary is unchanged; only the in-memory page cache is patched
+5. `suid_target -p` executes: the kernel maps the patched page, runs `setuid(0)` + `execve("/bin/bash", ["-p"])` → root shell
+6. After capturing the flag, the PoC re-runs the splice+write sequence with the original bytes to restore the page cache
+
+**Key concepts:**
+- Uninitialised `pipe_buffer.flags` → stale `PIPE_BUF_FLAG_CAN_MERGE` survives slot reuse
+- `splice()` imports a read-only file page into a pipe without triggering CoW
+- Merging `write()` lands directly on the live page-cache entry, bypassing file permissions
+- Only the page cache is modified — the inode and on-disk file are untouched
+- CVE-2022-0847, disclosed 2022-02-20, patched in Linux 5.16.11 / 5.15.25 / 5.10.102
+
+---
+
+### Lab 14 — PwnKit / copy_fail (CVE-2021-4034)(Broken)
+
+> ✅ **No kernel dependency:** this exploit targets the userland `pkexec`
+> SUID binary, not the kernel.  It works reliably in Docker regardless of
+> host kernel version, provided the container image ships the vulnerable
+> `policykit-1` package (< 0.120), which the `ubuntu:21.04` base image does.
+
+**Background:** `pkexec` (the PolicyKit SUID helper) performs an out-of-bounds
+read/write when called with `argc == 0`.  In that case `argv[1]` overlaps
+`envp[0]` on the stack.  `pkexec` then rewrites this value and re-executes
+itself — which lets an attacker inject `GCONV_PATH` into pkexec's *trusted*
+environment.  `pkexec` subsequently loads a locale conversion library from
+that attacker-controlled path with root privileges.
+
+```bash
+# Detection — check pkexec version
+pkexec --version          # < 0.120 is vulnerable
+dpkg -l policykit-1       # ubuntu:21.04 ships 0.105-31
+
+# Exploitation
+cd ~
+make                      # compiles pwnkit (launcher) + pwnkit_payload.so
+./pwnkit                  # spawns pkexec with argc=0, injects GCONV_PATH
+# Output: "[+] /bin/bash is now SUID root."
+/bin/bash -p
+cat /root/flag.txt
+```
+
+**What happens step by step:**
+1. `pwnkit` calls `execve("/usr/bin/pkexec", {NULL}, crafted_envp)` — argc is 0
+2. pkexec reads `argv[1]` → actually reads `envp[0]` = `"lol"` (our dir name)
+3. pkexec rewrites that slot with its own executable path (OOB write into envp)
+4. pkexec re-execs itself — our `GCONV_PATH=.` is now in its environment
+5. glibc's iconv reads `./lol/gconv-modules`, loads `./lol/pwnkit_payload.so`
+6. The payload constructor runs as root: `chmod 4755 /bin/bash`
+
+**Key concepts:**
+- `argc == 0` stack layout: `argv[1]` == `envp[0]`
+- Out-of-bounds write via pkexec's unsafe path normalisation
+- Trusted environment bypass via `GCONV_PATH` / iconv module loading
+- CVE-2021-4034, patched January 2022 (policykit-1 0.120+)
+
+---
+
 ## Recommended enumeration flow (use inside any lab)
 
 ```bash
@@ -279,18 +398,20 @@ grep -rn "password\|passwd" /var/www/ /opt/ /home/ 2>/dev/null | head -20
 uname -a && cat /proc/version
 ```
 
-## Adding more labs
 
-Each lab follows the same pattern:
+## Docker vs VM — kernel exploit considerations
 
-1. Create a new directory `NN-technique-name/`
-2. Write a `Dockerfile` with:
-   - A low-privilege `wocsa` user (with a unique password)
-   - `/root/flag.txt` readable only by root
-   - The vulnerability configured deliberately
-   - A `/home/wocsa/README.txt` with a hint
-3. For cron-based labs, include an `entrypoint.sh` that starts `cron` then `su`s to `wocsa`
-4. Add the service to `docker-compose.yml`
+| Technique | Works in Docker? | Notes |
+|-----------|-----------------|-------|
+| SUID / sudo / cron / capabilities | ✅ Yes | Fully userland — no kernel dependency |
+| Writable files / credential hunting | ✅ Yes | Fully userland |
+| PwnKit / CVE-2021-4034 | ✅ Yes | Targets pkexec binary, not kernel |
+| Dirty Pipe / CVE-2022-0847 | ⚠️ Host-dependent | Needs host kernel 5.8 – 5.16.11; deterministic (no race) |
+| Dirty COW / CVE-2016-5195 | ⚠️ Host-dependent | Needs host kernel < 4.8.3; race condition — unreliable |
+| Kernel ROP / heap exploits | ❌ No | Require a VM with a pinned kernel |
+
+For reliable kernel exploit labs, wrap your containers in a **QEMU/KVM VM**
+(e.g. via Vagrant + libvirt) provisioned with the target kernel version.
 
 ---
 

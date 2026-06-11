@@ -13,7 +13,7 @@ RUN apt-get update -qq && \
     apt-get install -y --no-install-recommends openssh-server python3 && \
     rm -rf /var/lib/apt/lists/*
 
-RUN useradd -m -s /bin/bash wocsa && echo "wocsa:xPDEOSjCQYuV" | chpasswd
+RUN useradd -m -s /bin/bash wocsa && echo "wocsa:wocsa" | chpasswd
 
 RUN echo "WOCSA{suid_python3_os_execl}" > /root/flag.txt && \
     chmod 600 /root/flag.txt

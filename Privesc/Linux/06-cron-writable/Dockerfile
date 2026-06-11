@@ -17,7 +17,7 @@ RUN apt-get update -qq && \
     apt-get install -y --no-install-recommends openssh-server cron && \
     rm -rf /var/lib/apt/lists/*
 
-RUN useradd -m -s /bin/bash wocsa && echo "wocsa:w4TSCR85OkuH" | chpasswd
+RUN useradd -m -s /bin/bash wocsa && echo "wocsa:wocsa" | chpasswd
 
 RUN echo "WOCSA{cron_writable_script_pwnd}" > /root/flag.txt && \
     chmod 600 /root/flag.txt

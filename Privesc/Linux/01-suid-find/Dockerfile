@@ -14,7 +14,7 @@ RUN apt-get update -qq && \
     rm -rf /var/lib/apt/lists/*
 
 # Low-privilege user
-RUN useradd -m -s /bin/bash wocsa && echo "wocsa:UQEwVXp3Bh0f" | chpasswd
+RUN useradd -m -s /bin/bash wocsa && echo "wocsa:wocsa" | chpasswd
 
 # Plant the flag
 RUN echo "WOCSA{suid_find_gives_root}" > /root/flag.txt && \

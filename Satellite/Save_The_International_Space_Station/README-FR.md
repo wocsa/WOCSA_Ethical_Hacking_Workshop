@@ -47,6 +47,7 @@
   - Sniffer radio
   - Analyseur de trames 
   - Émetteur/récepteur SDR
+  - Radar
 - **Documentation:** Dossier *WOCSA-Sat-Corps* (format des commandes 8-bit).
 
 #### **C. Menace Adverse**
