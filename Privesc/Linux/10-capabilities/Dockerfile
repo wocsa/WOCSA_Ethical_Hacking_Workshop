@@ -16,7 +16,7 @@ RUN apt-get update -qq && \
     apt-get install -y --no-install-recommends openssh-server python3 libcap2-bin && \
     rm -rf /var/lib/apt/lists/*
 
-RUN useradd -m -s /bin/bash wocsa && echo "wocsa:IveenXUpNocl" | chpasswd
+RUN useradd -m -s /bin/bash wocsa && echo "wocsa:wocsa" | chpasswd
 
 RUN echo "WOCSA{cap_setuid_python3_pwnd}" > /root/flag.txt && \
     chmod 600 /root/flag.txt

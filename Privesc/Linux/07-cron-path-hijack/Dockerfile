@@ -20,7 +20,7 @@ RUN apt-get update -qq && \
     apt-get install -y --no-install-recommends openssh-server cron procps && \
     rm -rf /var/lib/apt/lists/*
 
-RUN useradd -m -s /bin/bash wocsa && echo "wocsa:YdcjoXU8SVoR" | chpasswd
+RUN useradd -m -s /bin/bash wocsa && echo "wocsa:wocsa" | chpasswd
 
 RUN echo "WOCSA{cron_path_hijack_pwnd}" > /root/flag.txt && \
     chmod 600 /root/flag.txt

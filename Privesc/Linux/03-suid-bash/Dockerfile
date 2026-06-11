@@ -13,7 +13,7 @@ RUN apt-get update -qq && \
     apt-get install -y --no-install-recommends openssh-server && \
     rm -rf /var/lib/apt/lists/*
 
-RUN useradd -m -s /bin/bash wocsa && echo "wocsa:y1YH1XEvbWP8" | chpasswd
+RUN useradd -m -s /bin/bash wocsa && echo "wocsa:wocsa" | chpasswd
 
 RUN echo "WOCSA{bash_minus_p_gives_root}" > /root/flag.txt && \
     chmod 600 /root/flag.txt

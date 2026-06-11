@@ -16,7 +16,7 @@ RUN apt-get update -qq && \
     apt-get install -y --no-install-recommends openssh-server openssl && \
     rm -rf /var/lib/apt/lists/*
 
-RUN useradd -m -s /bin/bash wocsa && echo "wocsa:ItR2Cp08qzlX" | chpasswd
+RUN useradd -m -s /bin/bash wocsa && echo "wocsa:wocsa" | chpasswd
 
 RUN echo "WOCSA{writable_passwd_file_pwnd}" > /root/flag.txt && \
     chmod 600 /root/flag.txt

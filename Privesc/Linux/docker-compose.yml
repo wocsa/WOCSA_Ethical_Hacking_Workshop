@@ -1,16 +1,15 @@
 version: "3.9"
-
 # ============================================================
 #  Linux Privilege Escalation CTF Lab
 #  Usage:
-#    Build all:   docker compose build
-#    Run one lab: docker compose run --rm lab-01
-#    Run any lab: docker compose run --rm lab-XX
+#    Build all:        docker compose build
+#    Start all:        docker compose up -d
+#    Connect to lab:   ssh wocsa@localhost -p 3000X
+#    Run one lab:      docker compose run --rm lab-01
 # ============================================================
-
 services:
 
-  # ── SUID Binaries ───────────────────────────────────────
+  # ── SUID Binaries ───────────────────────────────────────────
   lab-01:
     build: ./01-suid-find
     image: privesc-lab:01-suid-find
@@ -41,7 +40,7 @@ services:
     stdin_open: true
     tty: true
 
-  # ── Sudo Misconfigurations ───────────────────────────────
+  # ── Sudo Misconfigurations ───────────────────────────────────
   lab-04:
     build: ./04-sudo-nopasswd
     image: privesc-lab:04-sudo-nopasswd
@@ -62,7 +61,7 @@ services:
     stdin_open: true
     tty: true
 
-  # ── Cron Abuse ───────────────────────────────────────────
+  # ── Cron Abuse ───────────────────────────────────────────────
   lab-06:
     build: ./06-cron-writable
     image: privesc-lab:06-cron-writable
@@ -72,9 +71,8 @@ services:
       - "30006:22"
     stdin_open: true
     tty: true
-    # cron needs to run as PID 1 context; privileged not needed here
     cap_add:
-      - SYS_TIME # allows cron to set timers
+      - SYS_TIME
 
   lab-07:
     build: ./07-cron-path-hijack
@@ -100,7 +98,7 @@ services:
     cap_add:
       - SYS_TIME
 
-  # ── File Permission Misconfigurations ────────────────────
+  # ── File Permission Misconfigurations ────────────────────────
   lab-09:
     build: ./09-writable-passwd
     image: privesc-lab:09-writable-passwd
@@ -111,7 +109,7 @@ services:
     stdin_open: true
     tty: true
 
-  # ── Linux Capabilities ───────────────────────────────────
+  # ── Linux Capabilities ───────────────────────────────────────
   lab-10:
     build: ./10-capabilities
     image: privesc-lab:10-capabilities
@@ -122,7 +120,7 @@ services:
     stdin_open: true
     tty: true
 
-  # ── Credential Hunting ───────────────────────────────────
+  # ── Credential Hunting ───────────────────────────────────────
   lab-11:
     build: ./11-credentials
     image: privesc-lab:11-credentials
@@ -133,7 +131,7 @@ services:
     stdin_open: true
     tty: true
 
-  # ── SUID PATH Hijacking ──────────────────────────────────
+  # ── SUID PATH Hijacking ──────────────────────────────────────
   lab-12:
     build: ./12-suid-path-hijack
     image: privesc-lab:12-suid-path-hijack
@@ -141,5 +139,40 @@ services:
     hostname: lab-12
     ports:
       - "30012:22"
+    stdin_open: true
+    tty: true
+
+  # ── Kernel Exploits ──────────────────────────────────────────
+  #
+  # NOTE — Dirty Pipe (lab-13) requires a vulnerable host kernel
+  # (Linux 5.8 – 5.16.11 / 5.15.25 / 5.10.102).  Docker shares
+  # the host kernel, so the exploit fires only when the host is
+  # in that range.  Unlike Dirty COW there is no race condition —
+  # the write is deterministic and immediate when the kernel is
+  # vulnerable.  Use a VM with a pinned kernel (e.g. Ubuntu 21.10
+  # + linux-image-5.13.0) if your host is already patched.
+  lab-13:
+    build: ./13-dirty-pipe
+    image: privesc-lab:13-dirty-pipe
+    container_name: privesc-13-dirty-pipe
+    hostname: lab-13
+    ports:
+      - "30013:22"
+    stdin_open: true
+    tty: true
+    # splice() + pipe write are fully unprivileged —
+    # no extra capabilities required.
+
+  # NOTE — PwnKit (lab-14) targets the pkexec SUID binary.
+  # The container pins ubuntu:21.04 which ships the vulnerable
+  # policykit-1 0.105-31.  The exploit runs entirely in user
+  # space and is independent of the host kernel version.
+  lab-14:
+    build: ./14-copy-fail
+    image: privesc-lab:14-copy-fail
+    container_name: privesc-14-copy-fail
+    hostname: lab-14
+    ports:
+      - "30014:22"
     stdin_open: true
     tty: true
