@@ -175,19 +175,11 @@ void showWocsaLogo() {
   display.display();
 }
 
+// The official logo carries its own BARBHACK 2026 wordmark, so this screen is
+// just the logo, centred and undecorated.
 void showBarbhackLogo() {
   display.clearDisplay();
-  display.drawBitmap(0, 0, epd_bitmap_barbhack_skull, 64, 64, SSD1306_WHITE);
-  display.setTextColor(SSD1306_WHITE);
-  display.setTextSize(1);
-  display.setCursor(68, 12);
-  display.print(F("BARBHACK"));
-  display.setTextSize(2);
-  display.setCursor(68, 26);
-  display.print(F("2026"));
-  display.setTextSize(1);
-  display.setCursor(68, 48);
-  display.print(F("TOULON"));
+  display.drawBitmap(32, 0, epd_bitmap_barbhack_logo, 64, 64, SSD1306_WHITE);
   display.display();
 }
 
@@ -252,7 +244,7 @@ void drawSuccessFrame(unsigned long elapsed) {
     display.print(F("booth!"));
 
   } else {
-    display.drawBitmap(0, 0, epd_bitmap_barbhack_skull, 64, 64, SSD1306_WHITE);
+    display.drawBitmap(0, 0, epd_bitmap_barbhack_logo, 64, 64, SSD1306_WHITE);
     display.setTextSize(1);
     display.setCursor(68, 8);
     display.print(F("FLAG"));
