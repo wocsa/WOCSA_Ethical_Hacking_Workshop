@@ -36,6 +36,9 @@ Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire);
 #include "../../../wocsa_logo.h"
 #include "../../../barbhack_logo.h"
 
+// Running several badges side by side at the booth? Bump the suffix per unit
+// (BARBHACK26_BLE_02, _03, ...) so participants can tell the stations apart.
+// This name is both advertised and shown on the title screen.
 #define DEVICE_NAME   "BARBHACK26_BLE_01"
 #define FLAG          "WOCSA{one_grain_of_sand_in_toulon}"
 #define CHECKIN_TOKEN "BARBHACK26_CHECKIN_OK"
@@ -165,7 +168,7 @@ void showTitle() {
   display.println(F("Script it, submit it,"));
   display.println(F("win a WOCSA mug."));
   display.println();
-  display.println(F("BARBHACK26_BLE_01"));
+  display.println(F(DEVICE_NAME));
   display.display();
 }
 
