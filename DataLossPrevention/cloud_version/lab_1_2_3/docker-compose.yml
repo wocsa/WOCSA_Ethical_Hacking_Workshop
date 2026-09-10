@@ -1,0 +1,22 @@
+version: '3.8'
+
+services:
+  wocsat-app:
+    build: .
+    deploy:
+      replicas: 4
+    environment:
+      - OLLAMA_API_KEY=${OLLAMA_API_KEY:-YOUR_OLLAMA_API_KEY_HERE}
+      - OLLAMA_API_URL=https://ollama.com/api
+      - OLLAMA_MODEL=nemotron-3-nano:30b
+    restart: unless-stopped
+
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - wocsat-app
+    restart: unless-stopped
