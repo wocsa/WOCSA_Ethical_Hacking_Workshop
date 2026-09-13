@@ -1,0 +1,139 @@
+{
+  "annotations": { "list": [] },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "id": null,
+  "links": [],
+  "panels": [
+    {
+      "title": "Messages in inbox",
+      "description": "Total mail captured by the gateway (retention applies)",
+      "type": "stat",
+      "gridPos": { "h": 5, "w": 6, "x": 0, "y": 0 },
+      "targets": [
+        {
+          "datasource": { "type": "yesoreyeram-infinity-datasource", "uid": "${DS_INFINITY}" },
+          "refId": "A",
+          "queryType": "json",
+          "type": "json",
+          "source": "url",
+          "url": "http://10.5.10.13:8025/api/v1/messages",
+          "url_options": { "params": [ { "key": "limit", "value": "1" } ] },
+          "format": "table",
+          "columns": [ { "selector": "total", "type": "number" } ],
+          "parser": "backend"
+        }
+      ],
+      "fieldConfig": { "defaults": { "decimals": 0 }, "overrides": [] },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "value" }
+    },
+    {
+      "title": "Unread messages",
+      "type": "stat",
+      "gridPos": { "h": 5, "w": 6, "x": 6, "y": 0 },
+      "targets": [
+        {
+          "datasource": { "type": "yesoreyeram-infinity-datasource", "uid": "${DS_INFINITY}" },
+          "refId": "A",
+          "queryType": "json",
+          "type": "json",
+          "source": "url",
+          "url": "http://10.5.10.13:8025/api/v1/messages",
+          "url_options": { "params": [ { "key": "limit", "value": "1" } ] },
+          "format": "table",
+          "columns": [ { "selector": "unread", "type": "number" } ],
+          "parser": "backend"
+        }
+      ],
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "value" }
+    },
+    {
+      "title": "Messages on this page",
+      "description": "Count returned by the latest query (max 50)",
+      "type": "stat",
+      "gridPos": { "h": 5, "w": 6, "x": 12, "y": 0 },
+      "targets": [
+        {
+          "datasource": { "type": "yesoreyeram-infinity-datasource", "uid": "${DS_INFINITY}" },
+          "refId": "A",
+          "queryType": "json",
+          "type": "json",
+          "source": "url",
+          "url": "http://10.5.10.13:8025/api/v1/messages",
+          "url_options": { "params": [ { "key": "limit", "value": "50" } ] },
+          "format": "table",
+          "columns": [ { "selector": "count", "type": "number" } ],
+          "parser": "backend"
+        }
+      ],
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "value" }
+    },
+    {
+      "title": "Tags in use",
+      "type": "stat",
+      "gridPos": { "h": 5, "w": 6, "x": 18, "y": 0 },
+      "targets": [
+        {
+          "datasource": { "type": "yesoreyeram-infinity-datasource", "uid": "${DS_INFINITY}" },
+          "refId": "A",
+          "queryType": "json",
+          "type": "json",
+          "source": "url",
+          "url": "http://10.5.10.13:8025/api/v1/messages",
+          "url_options": { "params": [ { "key": "limit", "value": "1" } ] },
+          "format": "table",
+          "columns": [ { "selector": "messages_count", "type": "number" } ],
+          "parser": "backend"
+        }
+      ],
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "value" }
+    },
+    {
+      "title": "Latest messages",
+      "description": "Newest mail first - spot the phishing campaigns landing in the company inbox",
+      "type": "table",
+      "gridPos": { "h": 13, "w": 24, "x": 0, "y": 5 },
+      "targets": [
+        {
+          "datasource": { "type": "yesoreyeram-infinity-datasource", "uid": "${DS_INFINITY}" },
+          "refId": "A",
+          "queryType": "json",
+          "type": "json",
+          "source": "url",
+          "url": "http://10.5.10.13:8025/api/v1/messages",
+          "url_options": { "params": [ { "key": "limit", "value": "25" } ] },
+          "root_selector": "messages",
+          "format": "table",
+          "columns": [
+            { "selector": "Subject", "type": "string" },
+            { "selector": "From.Address", "type": "string" },
+            { "selector": "To.0.Address", "type": "string" },
+            { "selector": "Snippet", "type": "string" },
+            { "selector": "Created", "type": "string" }
+          ],
+          "parser": "backend"
+        }
+      ],
+      "options": { "showHeader": true }
+    }
+  ],
+  "refresh": "30s",
+  "schemaVersion": 41,
+  "tags": ["cyberrange", "wocsa", "mail"],
+  "templating": {
+    "list": [
+      {
+        "name": "DS_INFINITY",
+        "type": "datasource",
+        "query": "yesoreyeram-infinity-datasource",
+        "current": { "text": "Infinity", "value": "Infinity" }
+      }
+    ]
+  },
+  "time": { "from": "now-1h", "to": "now" },
+  "timezone": "browser",
+  "title": "WOCSA Corp - Mail Gateway",
+  "uid": "wocsa-mail",
+  "version": 1
+}

@@ -61,8 +61,11 @@ Participants' laptops  │                                              │
                        │   wg-easy (VPN)   .2   ▲                    │
                        │   intranet-wiki  .10   │ dvwa is the ONLY  │
                        │   fileserver     .11   │ pivot from the    │
-                       │   dvwa (pivot)   .20 ◄─┘ DMZ (third leg)   │
-                       │   metasploitable2 .12                      │
+                       │   metasploitable2 .12  │ DMZ (third leg)   │
+                       │   dvwa (pivot)   .20 ◄─┘                   │
+                       │   grafana        .14   monitoring stack:   │
+                       │   prometheus     .15   probes every service│
+                       │   blackbox       .16   (dmz leg 10.5.10.20)│
                        │   wks-user01     .21                       │
                        │   wks-user02     .22                       │
                        └───────────────▲──────────────────────────────┘
@@ -82,6 +85,9 @@ Participants' laptops  │                                              │
 | intranet-wiki | linuxserver/dokuwiki | intranet .10 | VPN only | Internal knowledge base |
 | fileserver | drakkan/sftpgo | intranet .11 | VPN only | Internal file server (Web/SFTP/WebDAV/FTP) |
 | metasploitable2 | tleemcjr/metasploitable2 | intranet .12 | VPN only | Legacy vulnerable internal server |
+| grafana | grafana/grafana:12.2.10 | intranet .14 | VPN only | Internal monitoring dashboards - **default credentials `admin` / `admin`**, the point of the exercise |
+| prometheus | prom/prometheus | intranet .15 | VPN only | Metrics server scraping the health probes |
+| blackbox-exporter | prom/blackbox-exporter | intranet .16 + dmz .20 | VPN only (metrics) | Health prober for every service of the range |
 | wks-user01/02 | build `./workstations` (webtop) | intranet .21/.22 | VPN only | User workstations: full Linux desktop in the browser |
 | wg-easy | ghcr.io/wg-easy/wg-easy:15 | intranet .2 | UDP 51820 + admin UI `localhost:51821` | Corporate VPN gateway |
 
@@ -98,8 +104,9 @@ docker compose up -d      # starts all profiles
 First start highlights:
 - **workstations**: the two webtop images are built from `workstations/Dockerfile` (about 10 minutes).
 - **dokuwiki**: open `http://10.5.20.10/install.php` **through the VPN** to run its 5-minute install wizard once, then it is ready for workshops.
-- **sftpgo**: open `http://10.5.20.11/web/admin` through the VPN and create the first admin account once.
+- **sftpgo**: open `http://10.5.20.11:8080/web/admin` through the VPN and create the first admin account once.
 - **wg-easy**: pre-configured on first start (see [The VPN, like a real company](#the-vpn-like-a-real-company)).
+- **grafana**: on first start it downloads the Infinity plugin from grafana.com (internet required), then the two data sources and three dashboards (`WOCSA Corp` folder) are provisioned automatically - nothing to configure.
 
 # Access Map
 
@@ -120,6 +127,7 @@ First start highlights:
 | `http://10.5.20.11:8080/web/client` | File server web client |
 | `10.5.20.11:2022` | File server SFTP |
 | `10.5.20.12` | Metasploitable2 (ftp 21, telnet 23, ssh 22, samba, http 80...) |
+| `http://10.5.20.14:3000` | Grafana monitoring (`admin` / `admin` — the point of the exercise). Dashboards: **Services** (health of every service), **Mail Gateway** (company inbox), **VPN** (peers) |
 | `https://10.5.20.21:3001` | Workstation 01 desktop in the browser (accept the self-signed certificate) |
 | `https://10.5.20.22:3001` | Workstation 02 desktop in the browser |
 
@@ -195,6 +203,10 @@ What a compromised ("pwned") service can reach — verified live with the `DOCKE
 | **DVWA (tri-homed)** | + its database `dvwa-db:3306` **and the whole intranet** (wiki, fileserver, metasploitable2, workstations) — the intended and **only** pivot path from the DMZ | nothing - by design, this is the star of pivoting workshops |
 | VPN peer (participant) | the intranet, by design | db-tier |
 
+Two documented exceptions, both worth teaching:
+- **blackbox-exporter** (the ops health prober) is dual-homed on the dmz and intranet, so a DMZ foothold can reach it at `10.5.10.20:9115` and abuse its `/probe?target=...` endpoint as an internal port scanner - a classic "repurpose the monitoring tool" move. This is the only other way from the DMZ to *probe* the intranet, and it cannot establish sessions on its own.
+- **Grafana** stores the wg-easy and mailpit API credentials in its provisioned Infinity data source: pwning grafana (`admin:admin`) leaks them, and a pwned grafana can query those two APIs through the data source (restricted to exactly those hosts by `allowedHosts`).
+
 So the canonical attack story of the range is: **pwn DVWA from the outside -> pivot to the intranet -> own metasploitable2 / the workstations -> read the company mail**. Every other DMZ service stops at the DMZ boundary, which is exactly what a properly segmented network is supposed to do - and what DVWA, with its extra "misconfigured" network leg, fails to do.
 
 One caveat to know before promising "VPN-only" access in a workshop: **published ports are reachable from inside the lab too**, at the container's IP — even when bound to `127.0.0.1` on the host. Docker inserts a per-port ACCEPT that bypasses inter-network isolation (that is how DNAT works). In practice:
@@ -223,6 +235,8 @@ Then remove the stale peer configs and start over with a fresh `docker compose u
 - **VPN connected but intranet unreachable**: the tunnel must route `10.5.20.0/24` (split tunnel). Recreate your peer config if you changed the allowed IPs.
 - **Workstation desktop does not load**: it is **HTTPS on port 3001** with a self-signed certificate - accept the browser warning. Port 3000 exists only for reverse-proxy setups.
 - **Ports already in use**: 8080, 8081, 3000, 3001, 1025, 8025, 51820, 51821 must be free on the host.
+- **Grafana dashboards are empty**: the Infinity plugin needs internet on first start (check `docker logs cyberrange-grafana`); the mail/VPN dashboards need the VPN profile running (wg-easy) and the dmz profile (mailpit).
+- **No per-container CPU/RAM graphs**: deliberate. cAdvisor cannot see containers on Docker Desktop (WSL2), and giving grafana the Docker socket would let any pwned intranet service become root on the host - breaking the range's own pivoting story. The dashboards show service health (up/down, latency, ports) instead.
 - **Subnet collision**: the range uses 10.5.10.0/24, 10.5.15.0/24, 10.5.20.0/24 and 10.99.0.0/24. If your LAN uses the same ranges, change them in the compose file and in `WG_TUNNEL_CIDR`.
 - **Dokuwiki shows an install page**: it is normal on first start, complete the wizard once (see Quick Start).
 
@@ -235,3 +249,6 @@ Then remove the stale peer configs and start over with a fresh `docker compose u
 - [linuxserver/webtop](https://github.com/linuxserver/docker-webtop)
 - [linuxserver/dokuwiki](https://github.com/linuxserver/docker-dokuwiki)
 - [Mailpit](https://github.com/axllent/mailpit)
+- [Grafana Docker setup](https://grafana.com/docs/grafana/latest/setup-grafana/installation/docker/)
+- [Grafana Infinity datasource](https://grafana.com/plugins/yesoreyeram-infinity-datasource)
+- [Prometheus blackbox exporter](https://github.com/prometheus/blackbox_exporter)

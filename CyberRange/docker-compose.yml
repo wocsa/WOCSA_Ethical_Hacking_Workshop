@@ -157,6 +157,70 @@ services:
       intranet:
         ipv4_address: 10.5.20.12
 
+  # ---------------- Internal monitoring stack ----------------
+  grafana:
+    # Internal monitoring server - deployed with default credentials (admin/admin),
+    # the classic post-pivot win. VPN or dvwa pivot only.
+    # Dashboards and data sources are provisioned from ./monitoring.
+    # The custom entrypoint computes the wg-easy API Authorization header
+    # (Basic base64(user:password)) for datasource provisioning.
+    image: grafana/grafana:12.2.10
+    container_name: cyberrange-grafana
+    profiles: ["intranet"]
+    restart: unless-stopped
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin      # explicit: the lesson is default creds
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_PLUGINS_PREINSTALL: yesoreyeram-infinity-datasource
+      WG_ADMIN_USER: ${WG_ADMIN_USER:-admin}
+      WG_ADMIN_PASSWORD: ${WG_ADMIN_PASSWORD:?Set WG_ADMIN_PASSWORD in CyberRange/.env}
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        export WG_EASY_BASIC="Basic $$(printf '%s:%s' "$$WG_ADMIN_USER" "$$WG_ADMIN_PASSWORD" | base64)"
+        exec /run.sh
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./monitoring/provisioning:/etc/grafana/provisioning:ro
+    networks:
+      intranet:
+        ipv4_address: 10.5.20.14
+    depends_on:
+      - prometheus
+
+  prometheus:
+    # Metrics server: scrapes the blackbox exporter health probes and grafana.
+    image: prom/prometheus:latest
+    container_name: cyberrange-prometheus
+    profiles: ["intranet"]
+    restart: unless-stopped
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.retention.time=15d
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    networks:
+      intranet:
+        ipv4_address: 10.5.20.15
+
+  blackbox-exporter:
+    # Health prober, like real ops monitoring that watches every zone.
+    # Dual-homed (intranet + dmz) so it can probe the DMZ services - this is
+    # the documented monitoring exception to the single-leg rule, and it does
+    # NOT open a pivot: the dmz leg lets the prober out, nothing comes back in.
+    image: prom/blackbox-exporter:latest
+    container_name: cyberrange-blackbox
+    profiles: ["intranet"]
+    restart: unless-stopped
+    networks:
+      intranet:
+        ipv4_address: 10.5.20.16
+      dmz:
+        ipv4_address: 10.5.10.20
+
   wks-user01:
     # User workstation 01 - Ubuntu XFCE desktop in the browser (Selkies streaming,
     # HTTPS on port 3001 with a self-signed certificate).
@@ -222,6 +286,8 @@ volumes:
   fileserver_data:
   fileserver_state:
   wg_easy_config:
+  grafana_data:
+  prometheus_data:
 
 networks:
   dmz:
