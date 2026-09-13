@@ -190,7 +190,8 @@ services:
       DISABLE_IPV6: "true"
       INIT_ENABLED: "true"
       INIT_USERNAME: ${WG_ADMIN_USER:-admin}
-      INIT_PASSWORD: ${WG_ADMIN_PASSWORD:-cyberrange-admin}
+      # Required: no default. Generate one, e.g. `openssl rand -base64 18`
+      INIT_PASSWORD: ${WG_ADMIN_PASSWORD:?Set WG_ADMIN_PASSWORD in CyberRange/.env}
       INIT_HOST: ${WG_HOST:-auto}
       INIT_PORT: ${WG_PORT:-51820}
       INIT_DNS: 1.1.1.1

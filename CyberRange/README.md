@@ -23,6 +23,7 @@ This lab is for educational purposes only, as part of WOCSA ethical hacking work
 - [Using the range for a workshop](#using-the-range-for-a-workshop)
   - [Start only what you need](#start-only-what-you-need)
   - [Extend the range](#extend-the-range)
+  - [Pivoting and isolation](#pivoting-and-isolation)
 - [Day to day operations](#day-to-day-operations)
   - [Reset the environment](#reset-the-environment)
 - [Troubleshooting](#troubleshooting)
@@ -183,6 +184,21 @@ Rules of the house:
 - internal services must **not** publish ports: access goes through the VPN;
 - `container_name` always prefixed `cyberrange-`;
 - document the new service in the [Services](#services) table and the access map.
+
+## Pivoting and isolation
+What a compromised ("pwned") service can reach — verified live with the `DOCKER`/`DOCKER-FORWARD` firewall rules:
+
+| Foothold | Can reach | Cannot reach |
+|---|---|---|
+| DMZ-only service (juice-shop, corporate-site) | other DMZ services, the Internet | everything else: db-tier, intranet (Docker drops inter-bridge traffic) |
+| DVWA (dual-homed: dmz + db-tier) | + its database `dvwa-db:3306` (intended pivot: classic three-tier compromise) | wiki, fileserver, metasploitable2, workstations — all refused |
+| mailpit (dual-homed: dmz + intranet) | + the whole intranet (by design: it is the mail gateway) | nothing more |
+
+One caveat to know before promising "VPN-only" access in a workshop: **published ports are reachable from inside the lab too**, at the container's IP — even when bound to `127.0.0.1` on the host. Docker inserts a per-port ACCEPT that bypasses inter-network isolation (that is how DNAT works). In practice:
+- the wg-easy **WireGuard endpoint** (`10.5.20.2:51820/udp`) is fine: WireGuard silently drops packets without a valid key;
+- the wg-easy **admin UI** (`10.5.20.2:51821`) is the sensitive one: a pwned DMZ service could try to log in and mint itself a VPN peer. Hence `WG_ADMIN_PASSWORD` has no default — set a strong one.
+
+If you want the admin UI to be strictly host-only, publish it on a distinct loopback instead: `127.0.0.2:51821:51821` and connect via that address.
 
 # Day to day operations
 ```bash
