@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>WOCSA Corp - Cybersecurity services</title>
+  <style>
+    :root { --blue: #1f3b73; --accent: #2e7dd1; --bg: #f5f7fa; --text: #232a35; }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif; color: var(--text); background: var(--bg); }
+    header { background: var(--blue); color: #fff; padding: 1.2rem 2rem; display: flex; align-items: center; justify-content: space-between; }
+    header .logo { font-size: 1.4rem; font-weight: 700; letter-spacing: 1px; }
+    header nav a { color: #cfe0f7; text-decoration: none; margin-left: 1.5rem; font-size: .95rem; }
+    header nav a:hover { color: #fff; }
+    .hero { background: linear-gradient(135deg, var(--blue), var(--accent)); color: #fff; text-align: center; padding: 4rem 2rem; }
+    .hero h1 { font-size: 2.2rem; margin-bottom: .8rem; }
+    .hero p { max-width: 640px; margin: 0 auto; opacity: .9; }
+    main { max-width: 1000px; margin: 2.5rem auto; padding: 0 1.5rem; }
+    .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1.2rem; }
+    .card { background: #fff; border: 1px solid #e1e6ee; border-radius: 8px; padding: 1.4rem; box-shadow: 0 2px 6px rgba(31,59,115,.06); }
+    .card h2 { font-size: 1.1rem; color: var(--blue); margin-bottom: .5rem; }
+    .contact { margin-top: 2.5rem; background: #fff; border: 1px solid #e1e6ee; border-radius: 8px; padding: 1.4rem; }
+    .contact a { color: var(--accent); }
+    footer { text-align: center; color: #7a8494; font-size: .85rem; padding: 2rem 1rem; border-top: 1px solid #e1e6ee; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="logo">WOCSA&nbsp;Corp</div>
+    <nav>
+      <a href="#services">Services</a>
+      <a href="#about">About</a>
+      <a href="#contact">Contact</a>
+    </nav>
+  </header>
+
+  <section class="hero">
+    <h1>Making the digital world of tomorrow safer</h1>
+    <p>WOCSA Corp is a fictional cybersecurity company used exclusively for
+       WOCSA ethical hacking workshops. Everything on this site is fake -
+       perfect for cloning, phishing and web security exercises.</p>
+  </section>
+
+  <main>
+    <section class="cards" id="services">
+      <div class="card">
+        <h2>Security Audits</h2>
+        <p>Our fake experts audit your infrastructure and applications with
+           imaginary methodologies and very real-looking reports.</p>
+      </div>
+      <div class="card">
+        <h2>Incident Response</h2>
+        <p>24/7 incident handling for simulated crises. Our response team
+           is trained on this very lab.</p>
+      </div>
+      <div class="card">
+        <h2>Security Awareness</h2>
+        <p>Training your teams to spot phishing, social engineering and
+           other attacks - the very ones you will practise here.</p>
+      </div>
+    </section>
+
+    <section class="contact" id="contact">
+      <h2 id="about" style="font-size:1.1rem;color:var(--blue);margin-bottom:.6rem;">About &amp; Contact</h2>
+      <p>WOCSA Corp does not exist. This site belongs to the
+         <strong>WOCSA Ethical Hacking Workshop</strong> range, an intentionally
+         vulnerable training environment. Do not attack anything outside this lab.</p>
+      <p style="margin-top:.6rem;">
+        Email us: <a href="mailto:contact@wocsa-corp.local">contact@wocsa-corp.local</a>
+        (delivered to the lab mail gateway on port 1025)
+      </p>
+    </section>
+  </main>
+
+  <footer>
+    WOCSA Corp - fictional company for cybersecurity education -
+    <a href="https://wocsa.org/" style="color:inherit;">wocsa.org</a>
+  </footer>
+</body>
+</html>

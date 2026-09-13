@@ -1,0 +1,237 @@
+name: cyberrange
+
+# WOCSA CyberRange - an enterprise-style lab environment used by several workshops.
+#
+# Three zones, like a real company network:
+#   dmz      (10.5.10.0/24)  Internet-facing services, published on the host.
+#   db-tier  (10.5.15.0/24)  Databases. Only reachable by their application.
+#   intranet (10.5.20.0/24)  Internal services and user workstations. NO host ports:
+#                            reachable only through the WireGuard VPN (wg-easy).
+#
+# Start everything:      cp .env.example .env  &&  docker compose up -d
+# Start a single zone:   docker compose --profile dmz up -d
+# Available profiles:    dmz, intranet, vpn
+
+x-lsio-env: &lsio-env
+  PUID: ${PUID:-1000}
+  PGID: ${PGID:-1000}
+  TZ: ${TZ:-Etc/UTC}
+
+x-webtop: &webtop
+  build:
+    context: ./workstations
+  image: cyberrange-workstation:latest
+  restart: unless-stopped
+  shm_size: "1gb"
+  environment:
+    PUID: ${PUID:-1000}
+    PGID: ${PGID:-1000}
+    TZ: ${TZ:-Etc/UTC}
+
+services:
+  # ---------------- DMZ: public services ----------------
+  corporate-site:
+    image: nginx:alpine
+    container_name: cyberrange-corporate-site
+    profiles: ["dmz"]
+    restart: unless-stopped
+    volumes:
+      - ./corporate-site:/usr/share/nginx/html:ro
+    networks:
+      dmz:
+        ipv4_address: 10.5.10.10
+    ports:
+      - "${BIND_IP:-127.0.0.1}:8080:80"
+
+  juice-shop:
+    image: bkimminich/juice-shop:latest
+    container_name: cyberrange-juice-shop
+    profiles: ["dmz"]
+    restart: unless-stopped
+    networks:
+      dmz:
+        ipv4_address: 10.5.10.11
+    ports:
+      - "${BIND_IP:-127.0.0.1}:3000:3000"
+
+  dvwa:
+    # Dual-homed like a real three-tier deployment: web front end in the DMZ,
+    # second leg on the database tier (its DB is unreachable from elsewhere).
+    image: cytopia/dvwa:php-8.1
+    container_name: cyberrange-dvwa
+    profiles: ["dmz"]
+    restart: unless-stopped
+    depends_on:
+      - dvwa-db
+    environment:
+      SECURITY_LEVEL: ${DVWA_SECURITY_LEVEL:-low}
+      MYSQL_HOSTNAME: dvwa-db
+      MYSQL_DATABASE: dvwa
+      MYSQL_USERNAME: dvwa
+      MYSQL_PASSWORD: ${DB_PASSWORD:-p@ssw0rd}
+    networks:
+      dmz:
+        ipv4_address: 10.5.10.12
+      db-tier:
+        ipv4_address: 10.5.15.20
+    ports:
+      - "${BIND_IP:-127.0.0.1}:8081:80"
+
+  dvwa-db:
+    image: mariadb:10.1
+    container_name: cyberrange-dvwa-db
+    profiles: ["dmz"]
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-rootpass}
+      MYSQL_DATABASE: dvwa
+      MYSQL_USER: dvwa
+      MYSQL_PASSWORD: ${DB_PASSWORD:-p@ssw0rd}
+    volumes:
+      - dvwa_db_data:/var/lib/mysql
+    networks:
+      db-tier:
+        ipv4_address: 10.5.15.10
+
+  mailpit:
+    # The company mail gateway: SMTP in, mailbox web UI out.
+    # Dual-homed like a real mail relay (DMZ + intranet).
+    image: axllent/mailpit
+    container_name: cyberrange-mailpit
+    profiles: ["dmz"]
+    restart: unless-stopped
+    networks:
+      dmz:
+        ipv4_address: 10.5.10.13
+      intranet:
+        ipv4_address: 10.5.20.13
+    ports:
+      - "${BIND_IP:-127.0.0.1}:8025:8025"   # Web UI (read the inbox)
+      - "${BIND_IP:-127.0.0.1}:1025:1025"   # SMTP (send mail to the company)
+
+  # ---------------- Intranet: internal services ----------------
+  intranet-wiki:
+    image: lscr.io/linuxserver/dokuwiki:latest
+    container_name: cyberrange-intranet-wiki
+    profiles: ["intranet"]
+    restart: unless-stopped
+    environment:
+      <<: *lsio-env
+    volumes:
+      - intranet_wiki_config:/config
+    networks:
+      intranet:
+        ipv4_address: 10.5.20.10
+
+  fileserver:
+    # Internal file server: SFTP/WebDAV/FTP + web client.
+    # First start: open /web/admin to create the admin account.
+    image: drakkan/sftpgo:latest
+    container_name: cyberrange-fileserver
+    profiles: ["intranet"]
+    restart: unless-stopped
+    environment:
+      SFTPGO_GRACE_TIME: "20"
+    volumes:
+      - fileserver_data:/srv/sftpgo
+      - fileserver_state:/var/lib/sftpgo
+    networks:
+      intranet:
+        ipv4_address: 10.5.20.11
+
+  metasploitable2:
+    # Legacy unpatched internal server - the classic Metasploitable2 target.
+    # Accessible only from inside the intranet (through the VPN).
+    image: tleemcjr/metasploitable2
+    container_name: cyberrange-metasploitable2
+    profiles: ["intranet"]
+    restart: unless-stopped
+    tty: true
+    networks:
+      intranet:
+        ipv4_address: 10.5.20.12
+
+  wks-user01:
+    # User workstation 01 - Ubuntu XFCE desktop in the browser (Selkies streaming,
+    # HTTPS on port 3001 with a self-signed certificate).
+    <<: *webtop
+    container_name: cyberrange-wks-user01
+    profiles: ["intranet"]
+    networks:
+      intranet:
+        ipv4_address: 10.5.20.21
+
+  wks-user02:
+    # User workstation 02.
+    <<: *webtop
+    container_name: cyberrange-wks-user02
+    profiles: ["intranet"]
+    networks:
+      intranet:
+        ipv4_address: 10.5.20.22
+
+  # ---------------- VPN gateway ----------------
+  wg-easy:
+    # Corporate VPN gateway. Split-tunnel by default: peers route only
+    # 10.99.0.0/24 (tunnel) and 10.5.20.0/24 (intranet), their own Internet
+    # traffic stays direct. First start is pre-configured via INIT_* env vars.
+    image: ghcr.io/wg-easy/wg-easy:15
+    container_name: cyberrange-wg-easy
+    profiles: ["vpn"]
+    restart: unless-stopped
+    cap_add:
+      - NET_ADMIN
+      - SYS_MODULE
+    sysctls:
+      - net.ipv4.ip_forward=1
+      - net.ipv4.conf.all.src_valid_mark=1
+    environment:
+      INSECURE: "true"
+      DISABLE_IPV6: "true"
+      INIT_ENABLED: "true"
+      INIT_USERNAME: ${WG_ADMIN_USER:-admin}
+      INIT_PASSWORD: ${WG_ADMIN_PASSWORD:-cyberrange-admin}
+      INIT_HOST: ${WG_HOST:-auto}
+      INIT_PORT: ${WG_PORT:-51820}
+      INIT_DNS: 1.1.1.1
+      # Group rule: INIT_IPV4_CIDR and INIT_IPV6_CIDR must be set together
+      # (IPv6 itself is disabled above).
+      INIT_IPV4_CIDR: ${WG_TUNNEL_CIDR:-10.99.0.0/24}
+      INIT_IPV6_CIDR: fd99::/64
+      INIT_ALLOWED_IPS: ${WG_TUNNEL_CIDR:-10.99.0.0/24},10.5.20.0/24
+    volumes:
+      - wg_easy_config:/etc/wireguard
+      - /lib/modules:/lib/modules:ro
+    ports:
+      - "${BIND_IP:-127.0.0.1}:51821:51821"   # Admin UI (create peers / QR codes)
+      - "51820:51820/udp"                     # WireGuard endpoint for participants
+    networks:
+      intranet:
+        ipv4_address: 10.5.20.2
+
+volumes:
+  dvwa_db_data:
+  intranet_wiki_config:
+  fileserver_data:
+  fileserver_state:
+  wg_easy_config:
+
+networks:
+  dmz:
+    name: cyberrange-dmz
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 10.5.10.0/24
+  db-tier:
+    name: cyberrange-db-tier
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 10.5.15.0/24
+  intranet:
+    name: cyberrange-intranet
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 10.5.20.0/24
