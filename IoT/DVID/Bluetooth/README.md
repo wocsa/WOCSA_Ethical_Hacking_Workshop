@@ -208,6 +208,23 @@ The workshop goes from simple observation to active exploitation:
 
 ---
 
+## Other events
+
+### BarbHack 2026
+
+WOCSA also runs a standalone BLE booth challenge at **BarbHack 2026** (29 August 2026,
+Palais des Congrès Neptune, Toulon). It reuses the same DVID/ESP32 hardware but is not
+part of the THCon progression above:
+
+| # | Name | Tier | Difficulty | What you learn |
+|---|------|------|-----------|----------------|
+| 01 | [Needle in the Sand](./BarbHack2026/01_needle_in_the_sand/) | Intermediate | ⭐⭐⭐ | Automate GATT enumeration at scale, then write the flag back and catch the notification |
+
+See [BarbHack2026/](./BarbHack2026/) for details. Solve it at the event and the WOCSA
+booth hands you a mug.
+
+---
+
 ## Detailed Workshop Content
 
 ### 01 - GATT Enumeration

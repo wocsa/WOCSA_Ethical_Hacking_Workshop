@@ -21,6 +21,12 @@ NN_challenge_name/
 
 `wocsa_logo.h` lives at the root of this directory and is shared by all sketches via `../../wocsa_logo.h`.
 
+`barbhack_logo.h` lives next to it and holds the 64x64 BarbHack 2026 emblem used by the
+BarbHack challenge. The BarbHack challenges sit one level deeper
+(`BarbHack2026/NN_challenge_name/ESP32/`), so they include both headers as
+`../../../wocsa_logo.h` and `../../../barbhack_logo.h` — mirror that extra level when
+building them.
+
 ## Compile
 
 The build script mirrors the original directory structure in a temp folder so the relative `../../wocsa_logo.h` include resolves correctly.
@@ -63,6 +69,11 @@ cp /tmp/esp32_build/$SKETCH_NAME.ino.bin ESP32/$SKETCH_NAME-c6.bin
 > **Note:** Challenges 04 (`identity_theft`) and 07 (`weak_link`) have a `_c6.ino` variant
 > because the Bluedroid and NimBLE BLE APIs differ for those specific callbacks.
 > All other challenges compile from the same `.ino` for both targets.
+>
+> The BarbHack challenge `needle_in_the_sand` also needs a real `_c6.ino`: it is the only
+> sketch here using a NOTIFY characteristic. Bluedroid requires the CCCD to be added
+> explicitly (`#include <BLE2902.h>` + `addDescriptor(new BLE2902())`), while NimBLE
+> creates the 0x2902 descriptor itself and ships no `BLE2902.h` at all.
 
 ## Detect the serial port
 
