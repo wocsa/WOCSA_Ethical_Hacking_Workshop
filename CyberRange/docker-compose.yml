@@ -55,8 +55,11 @@ services:
       - "${BIND_IP:-127.0.0.1}:3000:3000"
 
   dvwa:
-    # Dual-homed like a real three-tier deployment: web front end in the DMZ,
-    # second leg on the database tier (its DB is unreachable from elsewhere).
+    # Tri-homed - THE pivot path of the range, and the only one:
+    #   dmz      : public web front end (the way in)
+    #   db-tier  : its own database (web -> DB compromise)
+    #   intranet : misconfigured leg, lets a pwned DVWA pivot internally
+    # No other DMZ service can reach the intranet.
     image: cytopia/dvwa:php-8.1
     container_name: cyberrange-dvwa
     profiles: ["dmz"]
@@ -74,6 +77,8 @@ services:
         ipv4_address: 10.5.10.12
       db-tier:
         ipv4_address: 10.5.15.20
+      intranet:
+        ipv4_address: 10.5.20.20
     ports:
       - "${BIND_IP:-127.0.0.1}:8081:80"
 
@@ -95,7 +100,10 @@ services:
 
   mailpit:
     # The company mail gateway: SMTP in, mailbox web UI out.
-    # Dual-homed like a real mail relay (DMZ + intranet).
+    # DMZ-only. Intranet clients (workstations, dvwa) reach it at 10.5.10.13
+    # via its published ports - Docker's published-port rules allow this
+    # without a network leg, keeping the intranet reachable from the DMZ
+    # through DVWA ONLY.
     image: axllent/mailpit
     container_name: cyberrange-mailpit
     profiles: ["dmz"]
@@ -103,8 +111,6 @@ services:
     networks:
       dmz:
         ipv4_address: 10.5.10.13
-      intranet:
-        ipv4_address: 10.5.20.13
     ports:
       - "${BIND_IP:-127.0.0.1}:8025:8025"   # Web UI (read the inbox)
       - "${BIND_IP:-127.0.0.1}:1025:1025"   # SMTP (send mail to the company)

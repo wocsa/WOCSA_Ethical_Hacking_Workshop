@@ -51,18 +51,18 @@ Participants' laptops  │                                              │
                        │  DMZ  10.5.10.0/24        published ports    │
   without VPN ───────► │   corporate-site  .10  ──  :8080            │
   (localhost ports)    │   juice-shop      .11  ──  :3000            │
-                       │   dvwa           .12  ──  :8081  ──┐        │
-                       │   mailpit        .13  ──  :1025/:8025      │
-                       │                                   │        │
+                       │   dvwa           .12  ──  :8081  ──┬──┐     │
+                       │   mailpit        .13  ──  :1025/:8025     │
+                       │                                   │  │     │
                        │  DB tier  10.5.15.0/24   no published port  │
                        │   dvwa-db         .10   ◄── dvwa only ──┘  │
                        │                                              │
                        │  INTRANET  10.5.20.0/24  no published port  │
-                       │   wg-easy (VPN)   .2                       │
-                       │   intranet-wiki  .10                       │
-                       │   fileserver     .11                       │
+                       │   wg-easy (VPN)   .2   ▲                    │
+                       │   intranet-wiki  .10   │ dvwa is the ONLY  │
+                       │   fileserver     .11   │ pivot from the    │
+                       │   dvwa (pivot)   .20 ◄─┘ DMZ (third leg)   │
                        │   metasploitable2 .12                      │
-                       │   mailpit        .13  (dual-homed)          │
                        │   wks-user01     .21                       │
                        │   wks-user02     .22                       │
                        └───────────────▲──────────────────────────────┘
@@ -76,9 +76,9 @@ Participants' laptops  │                                              │
 |---|---|---|---|---|
 | corporate-site | nginx:alpine | dmz .10 | `localhost:8080` | Fictional company site (phishing / cloning target) |
 | juice-shop | bkimminich/juice-shop | dmz .11 | `localhost:3000` | OWASP Top 10 training app |
-| dvwa | cytopia/dvwa (php-8.1) | dmz .12 + db-tier .20 | `localhost:8081` | Damn Vulnerable Web Application |
+| dvwa | cytopia/dvwa (php-8.1) | dmz .12 + db-tier .20 + intranet .20 | `localhost:8081` | Damn Vulnerable Web Application - the only pivot path to the intranet |
 | dvwa-db | mariadb:10.1 | db-tier .10 | dvwa only | DVWA database (segregated tier) |
-| mailpit | axllent/mailpit | dmz .13 + intranet .13 | `localhost:1025` (SMTP) / `:8025` (UI) | Company mail gateway: send mail to the company, read the inbox |
+| mailpit | axllent/mailpit | dmz .13 | `localhost:1025` (SMTP) / `:8025` (UI) | Company mail gateway: send mail to the company, read the inbox |
 | intranet-wiki | linuxserver/dokuwiki | intranet .10 | VPN only | Internal knowledge base |
 | fileserver | drakkan/sftpgo | intranet .11 | VPN only | Internal file server (Web/SFTP/WebDAV/FTP) |
 | metasploitable2 | tleemcjr/metasploitable2 | intranet .12 | VPN only | Legacy vulnerable internal server |
@@ -182,6 +182,7 @@ Workshops can add their own services to this compose file with a dedicated profi
 Rules of the house:
 - one static IP per service, in the right zone (public target: `dmz`, internal asset: `intranet`);
 - internal services must **not** publish ports: access goes through the VPN;
+- **never attach an intranet leg to another DMZ service**: DVWA is the only pivot path from the DMZ to the intranet, keep it that way (see [Pivoting and isolation](#pivoting-and-isolation));
 - `container_name` always prefixed `cyberrange-`;
 - document the new service in the [Services](#services) table and the access map.
 
@@ -190,13 +191,15 @@ What a compromised ("pwned") service can reach — verified live with the `DOCKE
 
 | Foothold | Can reach | Cannot reach |
 |---|---|---|
-| DMZ-only service (juice-shop, corporate-site) | other DMZ services, the Internet | everything else: db-tier, intranet (Docker drops inter-bridge traffic) |
-| DVWA (dual-homed: dmz + db-tier) | + its database `dvwa-db:3306` (intended pivot: classic three-tier compromise) | wiki, fileserver, metasploitable2, workstations — all refused |
-| mailpit (dual-homed: dmz + intranet) | + the whole intranet (by design: it is the mail gateway) | nothing more |
+| DMZ-only service (juice-shop, corporate-site, mailpit) | other DMZ services, the Internet | everything else: db-tier, intranet (Docker drops inter-bridge traffic) |
+| **DVWA (tri-homed)** | + its database `dvwa-db:3306` **and the whole intranet** (wiki, fileserver, metasploitable2, workstations) — the intended and **only** pivot path from the DMZ | nothing - by design, this is the star of pivoting workshops |
+| VPN peer (participant) | the intranet, by design | db-tier |
+
+So the canonical attack story of the range is: **pwn DVWA from the outside -> pivot to the intranet -> own metasploitable2 / the workstations -> read the company mail**. Every other DMZ service stops at the DMZ boundary, which is exactly what a properly segmented network is supposed to do - and what DVWA, with its extra "misconfigured" network leg, fails to do.
 
 One caveat to know before promising "VPN-only" access in a workshop: **published ports are reachable from inside the lab too**, at the container's IP — even when bound to `127.0.0.1` on the host. Docker inserts a per-port ACCEPT that bypasses inter-network isolation (that is how DNAT works). In practice:
 - the wg-easy **WireGuard endpoint** (`10.5.20.2:51820/udp`) is fine: WireGuard silently drops packets without a valid key;
-- the wg-easy **admin UI** (`10.5.20.2:51821`) is the sensitive one: a pwned DMZ service could try to log in and mint itself a VPN peer. Hence `WG_ADMIN_PASSWORD` has no default — set a strong one.
+- the wg-easy **admin UI** (`10.5.20.2:51821`) is the sensitive one: a pwned DVWA or any intranet foothold can try to log in and mint itself a VPN peer. Hence `WG_ADMIN_PASSWORD` has no default — set a strong one.
 
 If you want the admin UI to be strictly host-only, publish it on a distinct loopback instead: `127.0.0.2:51821:51821` and connect via that address.
 
