@@ -274,8 +274,8 @@ services:
       - wg_easy_config:/etc/wireguard
       - /lib/modules:/lib/modules:ro
     ports:
-      - "${BIND_IP:-127.0.0.1}:51821:51821"   # Admin UI (create peers / QR codes)
-      - "51820:51820/udp"                     # WireGuard endpoint for participants
+      - "${BIND_IP:-127.0.0.1}:51821:51821"                   # Admin UI (create peers / QR codes)
+      - "${BIND_IP:-127.0.0.1}:${WG_PORT:-51820}:51820/udp"   # WireGuard endpoint for participants (host port = WG_PORT)
     networks:
       intranet:
         ipv4_address: 10.5.20.2

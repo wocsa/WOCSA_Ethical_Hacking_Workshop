@@ -9,7 +9,8 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/*
 
 RUN python3 -m venv /opt/venv/metasploit
-RUN /opt/venv/metasploit/bin/pip install gc-metasploit
+RUN /opt/venv/metasploit/bin/pip install "mcp<2" && \
+    /opt/venv/metasploit/bin/pip install gc-metasploit
 
 COPY start.sh /start.sh
 RUN chmod +x /start.sh

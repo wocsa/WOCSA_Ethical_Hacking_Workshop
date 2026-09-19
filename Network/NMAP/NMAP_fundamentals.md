@@ -112,59 +112,54 @@ You should see output similar to this:
 
 ## Deploy the vulnerable target
 
-For this workshop, we will use an intentionnaly vulnerable virtual machine from https://www.vulnhub.com called metasploitable 2. This machine run a lot of services with some are vulnerable.
+For this workshop, we will use an intentionnaly vulnerable machine called metasploitable 2, provided by the WOCSA [CyberRange](../../CyberRange/README.md). This machine run a lot of services with some are vulnerable.
 
-Just for fun, the official machine description is : 
+Just for fun, the official machine description is :
 ```
 Some folks may already be aware of Metasploitable, an intentionally vulnerable virtual machine designed for training, exploit testing, and general target practice. Unlike other vulnerable virtual machines, Metasploitable focuses on vulnerabilities at the operating system and network services layer instead of custom, vulnerable applications. I am happy to announce the release of Metasploitable 2, an even better punching bag for security tools like Metasploit, and a great way to practice exploiting vulnerabilities that you might find in a production environment.
 ```
 
-1. **Download the VM files**:
-    You can found the VM files in a .zip on the Vulnhub website (https://www.vulnhub.com/entry/metasploitable-2,29/) 
-2. **Extract the files**
-   <p style="text-align:center;">
-      <img src="Nmap_fundamentals_Files/files.png"/>
-    </p>
-    Once you have extract the files, you should find a file named Metasploitable.vmdk.
-3. **Create a new VM**:
-   <p style="text-align:center;">
-      <img src="Nmap_fundamentals_Files/vm-0.png"/>
-    </p>
-    <p style="text-align:center;">
-      <img src="Nmap_fundamentals_Files/vm-1.png"/>
-    </p>
-    When you create a new VM, you don't have to choose for an ISO file. This is because you have all you need in the .vmdk.
-4. **Choose the hardware**:
-   <p style="text-align:center;">
-      <img src="Nmap_fundamentals_Files/vm-2.png"/>
-    </p>
-    For this virtual machine, you don't need too much power. Only one processor and 2048 MB of RAM is sufficant.
-5. **Choose the virtual hard disk**
-   <p style="text-align:center;">
-      <img src="Nmap_fundamentals_Files/vm-3.png"/>
-    </p>
-    Here, the virtual hard disk is already existing. It is the famous <em>Metasploitable.vmdk</em>.
-6. **Summary**:
-   <p style="text-align:center;">
-      <img src="Nmap_fundamentals_Files/vm-4.png"/>
-    </p>
-7. **Network**:
-8. **Start the VM**
+### Option 1 - the CyberRange (recommended)
+
+Metasploitable 2 is an *internal* server of the simulated company, so - like in a real enterprise - it is reachable only through the corporate VPN.
+
+1. **Start the range**:
+   ```bash
+   cd CyberRange
+   docker compose --profile intranet --profile vpn up -d
+   ```
+2. **Create a WireGuard peer** for your machine: open the wg-easy admin UI at `http://localhost:51821` (credentials are in `CyberRange/.env`), click **New**, then import the generated configuration in your WireGuard client (see the CyberRange README for the full steps).
+3. **Verify the tunnel**: `ping 10.5.20.12`
+
+The target is now Metasploitable 2 at **`10.5.20.12`**.
+
+### Option 2 - scan the DMZ (no VPN)
+
+Short on time? The public services of the range can be scanned directly on the host ports:
+
+```bash
+cd CyberRange
+docker compose --profile dmz up -d
+nmap -p- localhost
+```
+
+You should spot ports `3000` (Juice Shop), `8080` (corporate site), `8081` (DVWA), `8025` (mail UI) and `1025` (SMTP). The rest of this workshop targets Metasploitable 2, but every command below also works against these DMZ ports.
 
 ## Scan the target
 
-The ip address of the target could change. Here it will always be [target ip].
+In the CyberRange, the target has a static address: **10.5.20.12**. In the commands below, replace [target ip] with 10.5.20.12 (or a DMZ localhost port from Option 2).
 
 ### Get the open ports
 
 ```
 nmap [target ip] -p-
+# in the CyberRange: nmap 10.5.20.12 -p-
 ```
 
-**Note**: The `-p-` flag allow to scan all the ports of the machine.
+**Note**: The `-p-` flag allow to scan all the ports of the machine. The sample output below comes from the classic Vulnhub VM; the CyberRange container runs the same image but does not start every service (in the range, port 80 and a few others stay closed — that is part of the exercise).
 
 ```
-Nmap scan report for 10.0.2.5
+Nmap scan report for 10.5.20.12
 Host is up (0.00052s latency).
 Not shown: 65505 closed ports
 PORT      STATE SERVICE
@@ -206,10 +201,11 @@ Nmap done: 1 IP address (1 host up) scanned in 5.39 seconds
 
 ```
 nmap [target ip] -sV
+# in the CyberRange: nmap 10.5.20.12 -sV
 ```
 
 ```
-Nmap scan report for 10.0.2.5
+Nmap scan report for 10.5.20.12
 Host is up (0.00021s latency).
 Not shown: 977 closed ports
 PORT     STATE SERVICE     VERSION
@@ -254,9 +250,10 @@ Nmap done: 1 IP address (1 host up) scanned in 155.62 seconds
 
 ```
 nmap [target ip] -O
+# in the CyberRange: nmap 10.5.20.12 -O
 ```
 ```
-Nmap scan report for 10.0.2.5
+Nmap scan report for 10.5.20.12
 Host is up (0.00029s latency).
 Not shown: 977 closed ports
 PORT     STATE SERVICE
@@ -284,12 +281,12 @@ PORT     STATE SERVICE
 8009/tcp open  ajp13
 8180/tcp open  unknown
 
-MAC Address: 08:00:27:D4:29:95 (Oracle VirtualBox virtual NIC)
+MAC Address: 02:42:0A:14:00:0C (Docker container NIC)
 Device type: general purpose
 Running: Linux 2.6.X
 OS CPE: cpe:/o:linux:linux_kernel:2.6
 OS details: Linux 2.6.9 - 2.6.33
-Network Distance: 1 hop
+Network Distance: 2 hops (through the WireGuard gateway)
 
 OS detection performed. Please report any incorrect results at https://nmap.org/submit/ .
 
