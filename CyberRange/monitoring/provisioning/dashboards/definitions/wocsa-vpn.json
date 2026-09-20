@@ -1,0 +1,74 @@
+{
+  "annotations": { "list": [] },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "id": null,
+  "links": [],
+  "panels": [
+    {
+      "title": "VPN peers",
+      "description": "Clients provisioned on the corporate VPN gateway",
+      "type": "stat",
+      "gridPos": { "h": 5, "w": 8, "x": 0, "y": 0 },
+      "targets": [
+        {
+          "datasource": { "type": "yesoreyeram-infinity-datasource", "uid": "${DS_INFINITY}" },
+          "refId": "A",
+          "queryType": "json",
+          "type": "json",
+          "source": "url",
+          "url": "http://10.5.20.2:51821/api/client",
+          "format": "table",
+          "columns": [ { "selector": "id", "type": "number" } ],
+          "parser": "backend"
+        }
+      ],
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "value" }
+    },
+    {
+      "title": "Peer table",
+      "description": "Name, tunnel IP and status of every VPN peer - spot the peer an attacker minted",
+      "type": "table",
+      "gridPos": { "h": 12, "w": 24, "x": 0, "y": 5 },
+      "targets": [
+        {
+          "datasource": { "type": "yesoreyeram-infinity-datasource", "uid": "${DS_INFINITY}" },
+          "refId": "A",
+          "queryType": "json",
+          "type": "json",
+          "source": "url",
+          "url": "http://10.5.20.2:51821/api/client",
+          "format": "table",
+          "columns": [
+            { "selector": "name", "type": "string" },
+            { "selector": "ipv4Address", "type": "string" },
+            { "selector": "enabled", "type": "boolean" },
+            { "selector": "createdAt", "type": "string" },
+            { "selector": "expiresAt", "type": "string" }
+          ],
+          "parser": "backend"
+        }
+      ],
+      "options": { "showHeader": true }
+    }
+  ],
+  "refresh": "30s",
+  "schemaVersion": 41,
+  "tags": ["cyberrange", "wocsa", "vpn"],
+  "templating": {
+    "list": [
+      {
+        "name": "DS_INFINITY",
+        "type": "datasource",
+        "query": "yesoreyeram-infinity-datasource",
+        "current": { "text": "Infinity", "value": "Infinity" }
+      }
+    ]
+  },
+  "time": { "from": "now-1h", "to": "now" },
+  "timezone": "browser",
+  "title": "WOCSA Corp - VPN",
+  "uid": "wocsa-vpn",
+  "version": 1
+}

@@ -1,0 +1,33 @@
+# WOCSA CyberRange - Grafana data sources provisioning
+
+apiVersion: 1
+
+datasources:
+  # Prometheus: health probes of every service (see monitoring/prometheus.yml)
+  - name: Prometheus
+    type: prometheus
+    access: proxy
+    url: http://10.5.20.15:9090
+    isDefault: true
+    editable: true
+
+  # Infinity: JSON/REST APIs of the range (mailpit, wg-easy).
+  # NOTE: base url MUST stay "http://" - the plugin prefixes it to every
+  # query URL that does not start with it (corrupting absolute URLs), and
+  # Grafana normalizes an empty url back to http://localhost.
+  # allowedHosts restricts it to the two internal APIs - pwned grafana
+  # cannot use this data source to browse the whole intranet.
+  # The Authorization header (wg-easy basic auth) comes from the
+  # WG_EASY_BASIC env var computed by the grafana entrypoint.
+  - name: Infinity
+    type: yesoreyeram-infinity-datasource
+    access: proxy
+    url: "http://"
+    editable: true
+    secureJsonData:
+      httpHeaderValue1: $WG_EASY_BASIC
+    jsonData:
+      allowedHosts:
+        - http://10.5.10.13:8025
+        - http://10.5.20.2:51821
+      httpHeaderName1: Authorization
