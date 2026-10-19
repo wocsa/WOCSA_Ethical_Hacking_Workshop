@@ -1,0 +1,113 @@
+# WOCSA CyberRange - Prometheus configuration
+# Scrapes the blackbox exporter probes (http/tcp health checks on every
+# service of the range) and grafana itself.
+
+global:
+  scrape_interval: 30s
+  evaluation_interval: 30s
+
+scrape_configs:
+  # --- self / metrics stack ---
+  - job_name: prometheus
+    static_configs:
+      - targets: ["localhost:9090"]
+
+  - job_name: grafana
+    static_configs:
+      - targets: ["10.5.20.14:3000"]
+
+  - job_name: blackbox
+    static_configs:
+      - targets: ["10.5.20.16:9115"]
+
+  # --- HTTP probes: DMZ services (probed through the blackbox dmz leg) ---
+  - job_name: blackbox-http-dmz
+    metrics_path: /probe
+    params:
+      module: [http_2xx]
+    static_configs:
+      - targets:
+          - http://10.5.10.10:80          # corporate-site
+          - http://10.5.10.11:3000        # juice-shop
+          - http://10.5.10.12:80          # dvwa
+          - http://10.5.10.13:8025        # mailpit web UI
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: 10.5.20.16:9115
+
+  # --- HTTP probes: intranet services ---
+  - job_name: blackbox-http-intranet
+    metrics_path: /probe
+    params:
+      module: [http_2xx]
+    static_configs:
+      - targets:
+          - http://10.5.20.2:51821        # wg-easy admin UI (redirect 302 is ok)
+          - http://10.5.20.10             # intranet wiki
+          - http://10.5.20.11:8080        # fileserver web admin
+          - http://10.5.20.14:3000        # grafana itself (via the network)
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: 10.5.20.16:9115
+
+  # --- TCP probes: mail + file transfer ---
+  - job_name: blackbox-tcp-mail
+    metrics_path: /probe
+    params:
+      module: [tcp_connect]
+    static_configs:
+      - targets:
+          - 10.5.10.13:1025               # mailpit SMTP
+          - 10.5.20.11:2022               # fileserver SFTP
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: 10.5.20.16:9115
+
+  # --- TCP probes: legacy server (metasploitable2) - watch the attack surface ---
+  - job_name: blackbox-tcp-metasploitable2
+    metrics_path: /probe
+    params:
+      module: [tcp_connect]
+    static_configs:
+      - targets:
+          - 10.5.20.12:21                 # vsftpd 2.3.4
+          - 10.5.20.12:22                 # openssh 4.7
+          - 10.5.20.12:23                 # telnet
+          - 10.5.20.12:139                # netbios
+          - 10.5.20.12:445                # samba 3.0.20
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: 10.5.20.16:9115
+
+  # --- TCP probes: user workstations (desktop streaming) ---
+  - job_name: blackbox-tcp-workstations
+    metrics_path: /probe
+    params:
+      module: [tcp_connect]
+    static_configs:
+      - targets:
+          - 10.5.20.21:3001               # wks-user01
+          - 10.5.20.22:3001               # wks-user02
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: 10.5.20.16:9115

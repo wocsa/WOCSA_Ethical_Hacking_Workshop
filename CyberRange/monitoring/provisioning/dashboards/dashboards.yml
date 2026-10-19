@@ -1,0 +1,16 @@
+# WOCSA CyberRange - Grafana dashboards provisioning
+
+apiVersion: 1
+
+providers:
+  - name: wocsa-cyberrange
+    orgId: 1
+    folder: WOCSA Corp
+    folderUid: wocsa
+    type: file
+    disableDeletion: false
+    updateIntervalSeconds: 30
+    allowUiUpdates: true
+    options:
+      path: /etc/grafana/provisioning/dashboards/definitions
+      foldersFromFilesStructure: false

@@ -40,12 +40,13 @@ For this workshop, ensure you have the necessary permissions and environment to 
 1. **Install Docker:**
    Juice Shop can be easily set up using Docker. If you don't have Docker installed, you can download and install it from [Docker's official website](https://www.docker.com/).
 
-2. **Run Juice Shop:**
-   Open a terminal and run the following command to start Juice Shop:
+2. **Start the CyberRange:**
+   Juice Shop is provided by the WOCSA [CyberRange](../../CyberRange/README.md). Open a terminal and run:
    ```bash
-   docker run --rm -p 3000:3000 bkimminich/juice-shop
+   cd CyberRange
+   docker compose --profile dmz up -d juice-shop
    ```
-   This command will pull the Juice Shop image from Docker Hub and run it on port 3000.
+   This starts the same OWASP Juice Shop image on port 3000, alongside the other DMZ services of the range (DVWA, corporate site, mail gateway).
 
 3. **Access Juice Shop:**
    Open your web browser and navigate to `http://localhost:3000` to access the Juice Shop application.
@@ -87,9 +88,9 @@ This write-up provides a step-by-step guide to identifying and exploiting variou
 
 # Quick Win
 
-1. **Run Juice Shop:**
+1. **Run Juice Shop (CyberRange):**
    ```bash
-   docker run --rm -p 3000:3000 bkimminich/juice-shop
+   cd CyberRange && docker compose --profile dmz up -d juice-shop
    ```
 2. **Access Juice Shop:**
    ```bash

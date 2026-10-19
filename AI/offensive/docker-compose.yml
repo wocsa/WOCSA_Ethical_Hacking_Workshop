@@ -1,3 +1,9 @@
+name: wocsa-ai-offensive
+
+# Attacker tooling for the AI offensive workshop. The vulnerable targets
+# (DVWA, Juice Shop, Metasploitable2) are NOT here anymore: they are served
+# by the shared CyberRange lab (../CyberRange). Start CyberRange first, then:
+#   docker compose up -d
 services:
   kali-cai:
     image: neptune1212/kali-cai
@@ -5,31 +11,13 @@ services:
     privileged: true
     tty: true
     env_file: ".env"
+    # Dual-homed like a VPN peer of the simulated company: DMZ leg to reach
+    # the public targets, intranet leg to reach the internal servers.
     networks:
-      cyberlab-net:
-        ipv4_address: 172.28.0.2
-
-  metasploitable2:
-    image: tleemcjr/metasploitable2
-    container_name: metasploitable2
-    networks:
-      cyberlab-net:
-        ipv4_address: 172.28.0.3
-    tty: true  
-
-  juiceshop:
-    image: bkimminich/juice-shop
-    container_name: juiceshop
-    networks:
-      cyberlab-net:
-        ipv4_address: 172.28.0.4
-
-  dvwa:
-    image: vulnerables/web-dvwa
-    container_name: dvwa
-    networks:
-      cyberlab-net:
-        ipv4_address: 172.28.0.5
+      cyberrange-dmz:
+        ipv4_address: 10.5.10.30
+      cyberrange-intranet:
+        ipv4_address: 10.5.20.30
 
   metasploit-mcp:
     build:
@@ -37,12 +25,13 @@ services:
     container_name: metasploit-mcp
     env_file: ".env"
     networks:
-      cyberlab-net:
-        ipv4_address: 172.28.0.6
+      cyberrange-dmz:
+        ipv4_address: 10.5.10.31
 
 networks:
-  cyberlab-net:
-    driver: bridge
-    ipam:
-      config:
-        - subnet: 172.28.0.0/16
+  cyberrange-dmz:
+    name: cyberrange-dmz
+    external: true
+  cyberrange-intranet:
+    name: cyberrange-intranet
+    external: true
