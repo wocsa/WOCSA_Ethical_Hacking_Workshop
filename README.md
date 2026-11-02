@@ -40,6 +40,8 @@ The various areas of cybersecurity covered include:
 - **Social Engineering (Phishing) and Security Awareness**: Exploring social engineering techniques used by attackers to manipulate individuals and obtain sensitive information, as well as security awareness to promote good practices among users.
 - **Password Cracking**: Exploring techniques and methods used for password cracking, including brute-force attacks, dictionary attacks, and rainbow table attacks. Studying best practices for creating strong passwords and security measures to protect passwords.
 - **Mobile Hacking (Android and iOS)**: Analyzing vulnerabilities specific to mobile operating systems like Android and iOS. Exploring hacking techniques used to access sensitive data, bypass security measures, and exploit mobile applications. Studying methods for protecting and securing mobile devices.
+- **Pivoting**: [Pivoting and lateral movement](Network/Pivoting/Pivoting_Lateral_Movement.md) through DVWA into the CyberRange intranet, with relay, SOCKS and isolation exercises ([slides](Network/Pivoting/WOCSA-Diapo_Pivoting_Lateral_Movement.pptx)).
+
 - **CyberRange**: A deployable Docker lab environment simulating a small company network (DMZ with public services, segregated database tier, intranet with user workstations reachable only through a WireGuard VPN). Based on classic images (Juice Shop, DVWA, Metasploitable2), it is the shared infrastructure of the [Juice Shop](WEB/JuiceShop/JuiceShop.md), [Nmap](Network/NMAP/NMAP_fundamentals.md), [Bettercap MITM](MITM/Bettercap/MITM_bettercap.md) and [AI offensive](AI/offensive/README.md) workshops.
 
 ## Add Your Content
