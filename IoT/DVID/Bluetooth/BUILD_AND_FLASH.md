@@ -27,6 +27,21 @@ BarbHack challenge. The BarbHack challenges sit one level deeper
 `../../../wocsa_logo.h` and `../../../barbhack_logo.h` — mirror that extra level when
 building them.
 
+`capitole_logo.h` holds the full-screen 128x64 Capitole du Libre wordmark used by the
+Capitole du Libre 2026 challenge (`CapitoleDuLibre2026/01_open_gatt/`, ESP32-C6 only:
+`open_gatt_c6.ino` / `open_gatt_c6.bin`). It is included the same way, as
+`../../../capitole_logo.h`.
+
+> **Apple Silicon without Rosetta:** the ESP32 core's bundled `ctags` is x86-only and
+> the build stops with `bad CPU type in executable`. `open_gatt_c6.ino` declares every
+> function before use, so it does not need Arduino's prototype generation — point the
+> build at a no-op stub instead:
+> ```bash
+> mkdir -p /tmp/ctags-stub && printf '#!/bin/sh\nexit 0\n' > /tmp/ctags-stub/ctags && chmod +x /tmp/ctags-stub/ctags
+> arduino-cli compile --fqbn esp32:esp32:esp32c6 \
+>   --build-property "tools.ctags.path=/tmp/ctags-stub" ...
+> ```
+
 ## Compile
 
 The build script mirrors the original directory structure in a temp folder so the relative `../../wocsa_logo.h` include resolves correctly.
