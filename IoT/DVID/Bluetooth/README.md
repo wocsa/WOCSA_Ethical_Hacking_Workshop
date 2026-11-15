@@ -223,6 +223,17 @@ part of the THCon progression above:
 See [BarbHack2026/](./BarbHack2026/) for details. Solve it at the event and the WOCSA
 booth hands you a mug.
 
+### Capitole du Libre 2026
+
+A beginner BLE stand challenge for **Capitole du Libre 2026** (14-15 November 2026,
+ENSEEIHT, Toulouse), on the same DVID ESP32-C6 hardware:
+
+| # | Name | Tier | Difficulty | What you learn |
+|---|------|------|-----------|----------------|
+| 01 | [Open GATT](./CapitoleDuLibre2026/01_open_gatt/) | Beginner | ⭐ | Enumerate every GATT service — not just the advertised one — read the flag, write it back and catch the notification |
+
+See [CapitoleDuLibre2026/](./CapitoleDuLibre2026/) for details.
+
 ---
 
 ## Detailed Workshop Content
