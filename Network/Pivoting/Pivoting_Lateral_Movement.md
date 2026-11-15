@@ -20,6 +20,7 @@ This workshop is for educational purposes only, as part of WOCSA ethical hacking
   - [Pivot 4: Mint your own VPN peer (become an employee)](#pivot-4-mint-your-own-vpn-peer-become-an-employee)
 - [Phase 4 - Lateral movement goals](#phase-4---lateral-movement-goals)
 - [Defense & detection](#defense--detection)
+- [Remediation](#remediation)
 - [Takeaways checklist](#takeaways-checklist)
 - [Resources](#resources)
 - [Summary report](#summary-report)
@@ -237,6 +238,27 @@ Choose your own adventure, all from the pivoted position:
 - **Least privilege network legs**: DMZ apps need a DMZ leg, not an intranet one. Databases need a private tier reachable only by their application. Review every container's networks like a firewall rule.
 - **Detection limits**: the bundled Prometheus/blackbox dashboards show service health, not connection histories or peer-creation audit events. To investigate a pivot, collect application logs and packet captures on the relevant interfaces (the relay and tunnel connections above all originate from DVWA). Record source/destination addresses and timestamps during the exercise.
 - **Patch and segment DVWA**: it is intentionally vulnerable (low security level, command injection, file upload) - in production it should be patched, hardened, and, above all, stripped of its intranet leg.
+
+# Remediation
+Each step of the attack maps to a concrete fix. The first one alone breaks the whole chain; the rest reduce blast radius and buy detection time (defence in depth).
+
+1. **Remove the pivot path - strip DVWA's intranet leg (the single most important fix).** A DMZ web app has no business holding a network card on the user intranet. In `CyberRange/docker-compose.yml`, the `dvwa` service lists three networks (`dmz`, `db-tier`, `intranet`); delete the `intranet` block so it keeps only its public leg and its database tier:
+   ```yaml
+   networks:
+     dmz:
+       ipv4_address: 10.5.10.12
+     db-tier:
+       ipv4_address: 10.5.15.20
+     # intranet: REMOVED - no DMZ service should reach 10.5.20.0/24
+   ```
+   After this, `[DVWA] hostname -I` shows only two legs and the intranet is unreachable from every DMZ host - the pivot dead-ends where the attacker already was.
+2. **Default-deny egress from the DMZ.** Pivots 2 and 3 only work because DVWA can dial *out* to the attacker (the netcat relay and the chisel reverse tunnel). A DMZ server should not open arbitrary outbound connections: restrict egress to the few destinations it genuinely needs (its database, specific update mirrors) and deny the rest. That also stops reverse shells and tunnels even if code execution is achieved.
+3. **Fix the web vulnerabilities that give the foothold.** Command injection and unrestricted file upload are the entry point. Validate and whitelist input, never pass user data to a shell (use parameterised APIs), and constrain uploads by type/location and serve them non-executable. Run the app at a real security level, patched, not DVWA's `low`.
+4. **Kill default and shared credentials.** The lab wins on `admin`/`password` (DVWA), `admin`/`admin` (Grafana), `msfadmin`/`msfadmin` (metasploitable2) and a known VPN admin password. Set unique strong secrets per service, disable built-in/default accounts, and add MFA on admin UIs.
+5. **Decommission or isolate legacy hosts.** Metasploitable2's unauthenticated root bindshell on `1524` (and its pile of 2000s-era services) should not exist on a modern network. Retire such hosts, or if they must run, firewall them to the single management source that needs them and never leave an unauthenticated shell listening.
+6. **Don't trust the network position - authenticate internal services.** The mail gateway, wiki, file server and monitoring stack assume "inside = trusted". Require authentication on every internal service (the mailpit inbox had none) so a single pivot does not hand over company mail and internal data. Treat the intranet as hostile (zero-trust).
+7. **Keep admin planes off the reachable surface.** The wg-easy admin UI was reachable from the foothold. Bind management interfaces to a dedicated admin network/VPN, not to any address a compromised DMZ box can reach.
+8. **Make the pivot detectable.** Health dashboards show status, not connections. Add connection/flow logging at zone boundaries and alert on what should never happen: any DMZ→intranet traffic, and outbound connections from a DMZ web server. Centralise application logs and keep source/destination/timestamp so a relay or tunnel originating from DVWA stands out.
 
 # Takeaways checklist
 - [ ] Logged into DVWA at `SERVER:8081` (`admin`/`password`), ran setup.php on first boot
