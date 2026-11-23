@@ -58,9 +58,9 @@ Instructor only (`[operator]`, on the server):
 ## Instructor setup and repeatable checks
 *(`[operator]` - on the server. Participants can skip this section.)*
 
-Allow about 90 minutes: setup/foothold 20, enumeration 15, relays/SOCKS 35, defense and cleanup 20. A Linux Docker host can often reach bridge addresses directly; participants coming over the network cannot, which is exactly the isolation you want to demonstrate. Start only the core targets (DVWA's database starts as a dependency):
+Allow about 90 minutes: setup/foothold 20, enumeration 15, relays/SOCKS 35, defense and cleanup 20. A Linux Docker host can often reach bridge addresses directly; participants coming over the network cannot, which is exactly the isolation you want to demonstrate. Start the services the guide exercises (DVWA's database starts as a dependency). `wg-easy` and `mailpit` are included because Pivot 1/Pivot 4 probe the wg-easy admin UI and Phase 4 reads the mailpit inbox:
 ```bash
-docker compose --env-file CyberRange/.env.example -f CyberRange/docker-compose.yml up -d corporate-site dvwa intranet-wiki metasploitable2
+docker compose --env-file CyberRange/.env.example -f CyberRange/docker-compose.yml up -d corporate-site dvwa intranet-wiki metasploitable2 wg-easy mailpit
 # Confirm DVWA is tri-homed (all three legs appear):
 docker inspect cyberrange-dvwa | grep -E "10\.5\.(10|15|20)\."
 # Confirm DVWA reaches the intranet wiki, and a DMZ-only box does not:
@@ -69,11 +69,11 @@ docker exec cyberrange-corporate-site wget -qO- --timeout=2 http://10.5.20.10/ ;
 ```
 The sample environment suffices for the local core lab. For shared hosting, copy it to `CyberRange/.env`, configure the bind address and credentials, and use that file instead. Older target images may require amd64 emulation on ARM hosts. Wait for services to finish booting before testing. Initialize DVWA through `/setup.php`; do not reset a shared database without coordinating with the class.
 
-These checks use operator access on the server and are bounded and non-destructive: they verify the core topology and HTTP/TCP access, not completion of the interactive exercises. Optional VPN, monitoring, mail and desktop goals require those services to be started separately.
+These checks use operator access on the server and are bounded and non-destructive: they verify the core topology and HTTP/TCP access, not completion of the interactive exercises. Monitoring and desktop-workstation goals are optional and require those services (`grafana`, `prometheus`, `blackbox-exporter`, `wks-user01`/`wks-user02`) to be started separately. `wg-easy` and Tomcat on metasploitable2 can take a minute or two to answer, especially under amd64 emulation on an ARM host - wait and retry before treating them as down.
 
 Stop only these workshop services when finished (preserves data):
 ```bash
-docker compose --env-file CyberRange/.env.example -f CyberRange/docker-compose.yml stop corporate-site dvwa dvwa-db intranet-wiki metasploitable2
+docker compose --env-file CyberRange/.env.example -f CyberRange/docker-compose.yml stop corporate-site dvwa dvwa-db intranet-wiki metasploitable2 wg-easy mailpit
 ```
 
 # Lab topology recap
